@@ -14,8 +14,11 @@
     <div class="container">
         
         <header class="header">
-            <div class="header__actions" style="display:flex; justify-content:flex-end; gap: var(--spacing-md);">
-                <button id="themeToggle" class="button button--tertiary" aria-pressed="false" aria-label="Toggle theme">Switch to Light</button>
+            <div class="header__actions">
+                <button id="themeToggle" class="theme-toggle" aria-pressed="false" aria-label="Toggle theme" data-theme-state="dark">
+                    <span class="theme-toggle__thumb" aria-hidden="true"></span>
+                    <span class="visually-hidden">Toggle theme</span>
+                </button>
             </div>
             <h1 class="header__title">PII & PHI Scrubber</h1>
             <p class="header__subtitle">Paste text to automatically redact sensitive information.</p>
@@ -44,6 +47,7 @@
             <div class="button-group">
                 <button id="deidentifyButton" class="button button--primary">De-identify Text</button>
                 <button id="copyButton" class="button button--secondary">Copy Output</button>
+                <button id="decryptButton" class="button button--tertiary">Decrypt Output</button>
                 <button id="clearButton" class="button button--tertiary">Clear All</button>
             </div>
         </main>
@@ -98,10 +102,10 @@
             const applyTheme = (theme) => {
                 if (theme === 'light') {
                     root.setAttribute('data-theme', 'light');
-                    if (themeToggle) { themeToggle.textContent = 'Switch to Dark'; themeToggle.setAttribute('aria-pressed', 'true'); }
+                    if (themeToggle) { themeToggle.setAttribute('aria-pressed', 'true'); themeToggle.dataset.themeState = 'light'; themeToggle.setAttribute('aria-label', 'Switch to dark theme'); }
                 } else {
                     root.removeAttribute('data-theme');
-                    if (themeToggle) { themeToggle.textContent = 'Switch to Light'; themeToggle.setAttribute('aria-pressed', 'false'); }
+                    if (themeToggle) { themeToggle.setAttribute('aria-pressed', 'false'); themeToggle.dataset.themeState = 'dark'; themeToggle.setAttribute('aria-label', 'Switch to light theme'); }
                 }
             };
             let currentTheme = getPreferredTheme();
@@ -120,6 +124,7 @@
             const copyButton = document.getElementById('copyButton');
             const clearButton = document.getElementById('clearButton');
             const copyNotification = document.getElementById('copyNotification');
+            const decryptButton = document.getElementById('decryptButton');
 
             // Gemini section elements
             const geminiActions = document.getElementById('geminiActions');
@@ -133,7 +138,7 @@
             const geminiResultContent = document.getElementById('geminiResultContent');
 
             const callApi = async (text, action) => {
-                const response = await fetch('/.netlify/functions/scrub', {
+                const response = await fetch('/scrub', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -142,6 +147,10 @@
                 });
                 return response.json();
             };
+
+            // Holds encryption package from last de-identification
+            let lastKey = null; // base64url-encoded AES key
+            let lastTokenMap = null; // { token: { c, iv } }
 
             deidentifyButton.addEventListener('click', async () => {
                 const text = inputText.value;
@@ -180,8 +189,10 @@
 
                 animate();
 
-                const { cleanedText } = await callApi(text, 'deidentify');
+                const { cleanedText, key, tokenMap } = await callApi(text, 'deidentify');
                 outputText.value = cleanedText;
+                lastKey = key;
+                lastTokenMap = tokenMap;
                 geminiActions.classList.remove('hidden');
             });
 
@@ -221,7 +232,30 @@
                 geminiResult.classList.add('hidden');
                 const graphic = document.getElementById('graphic');
                 graphic.classList.add('hidden');
+                lastKey = null; lastTokenMap = null;
             });
+
+            // Decrypt output by replacing tokens with original FERPA values (edge decrypts; no FERPA to LLM)
+            if (decryptButton) {
+                decryptButton.addEventListener('click', async () => {
+                    if (!outputText.value) return;
+                    if (!lastKey || !lastTokenMap) {
+                        alert('Nothing to decrypt. Please de-identify input first.');
+                        return;
+                    }
+                    const response = await fetch('/scrub', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ action: 'decrypt', text: outputText.value, key: lastKey, tokenMap: lastTokenMap })
+                    });
+                    const data = await response.json();
+                    if (data.decryptedText) {
+                        outputText.value = data.decryptedText;
+                    } else if (data.error) {
+                        alert('Decrypt failed.');
+                    }
+                });
+            }
         });
     </script>
 </body>
