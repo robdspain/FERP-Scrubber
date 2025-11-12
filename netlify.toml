@@ -1,0 +1,7 @@
+[build]
+  functions = "netlify/edge-functions"
+  publish = "public"
+
+[[edge_functions]]
+  path = "/scrub"
+  function = "scrub"

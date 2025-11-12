@@ -1,0 +1,22 @@
+{
+  "name": "ferpa-scrubber",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build:css": "pnpm exec tailwindcss -i ./css/atomic.css -o ./public/css/atomic.css --watch",
+    "start": "pnpm run build:css & netlify dev"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.21.0",
+  "dependencies": {
+    "@google/generative-ai": "^0.24.1"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.22",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.17"
+  }
+}

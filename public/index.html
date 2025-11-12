@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PII & PHI Scrubber with Gemini</title>
+    <link href="/css/atomic.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body class="bg-background text-foreground">
+
+    <div class="container">
+        
+        <header class="header">
+            <h1 class="header__title">PII & PHI Scrubber</h1>
+            <p class="header__subtitle">Paste text to automatically redact sensitive information.</p>
+        </header>
+
+        <div class="disclaimer">
+            <p class="disclaimer__title">Important Disclaimer</p>
+            <p class="disclaimer__text">This tool is for demonstration only. It is <span class="font-semibold">NOT</span> a substitute for a professional, HIPAA-compliant de-identification service. It may miss sensitive data or remove data incorrectly. Always manually review the output before any official use.</p>
+        </div>
+
+        <main class="main-content">
+            <div class="io-grid">
+                <div class="io-card">
+                    <label for="inputText" class="io-card__label">Input Text</label>
+                    <p class="io-card__description">Paste your sensitive text here.</p>
+                    <textarea id="inputText" class="io-card__textarea" placeholder="Paste information that is full of health and personal information..."></textarea>
+                </div>
+
+                <div class="io-card">
+                    <label for="outputText" class="io-card__label">De-identified Output</label>
+                    <p class="io-card__description">Cleaned text will appear here.</p>
+                    <textarea id="outputText" readonly class="io-card__textarea io-card__textarea--output"></textarea>
+                </div>
+            </div>
+
+            <div class="button-group">
+                <button id="deidentifyButton" class="button button--primary">De-identify Text</button>
+                <button id="copyButton" class="button button--secondary">Copy Output</button>
+                <button id="clearButton" class="button button--tertiary">Clear All</button>
+            </div>
+        </main>
+        
+        <section id="graphic" class="hidden graphic-section">
+            <div class="card">
+                <h2 class="card__title">Scrubbing Process</h2>
+                <canvas id="scrubbingCanvas" class="graphic-section__canvas"></canvas>
+            </div>
+        </section>
+
+        <section id="geminiActions" class="hidden gemini-section">
+            <div class="card">
+                <h2 class="card__title">✨ AI Actions on Clean Text</h2>
+                <p class="card__subtitle">These tools use the Gemini API to analyze the <span class="font-semibold">de-identified output text</span> only. No sensitive input data is sent.</p>
+                
+                <div class="button-group">
+                    <button id="summarizeButton" class="button button--ai">Summarize</button>
+                    <button id="simplifyButton" class="button button--ai">Simplify</button>
+                    <button id="extractButton" class="button button--ai">Extract Info</button>
+                    <button id="narrativeButton" class="button button--ai">Create Narrative</button>
+                </div>
+
+                <div id="geminiLoading" class="hidden loading-indicator">
+                    <div class="loader"></div>
+                    <p>Calling Gemini API... Please wait.</p>
+                </div>
+
+                <div id="geminiResult" class="hidden">
+                    <h3 id="geminiResultTitle" class="gemini-result__title"></h3>
+                    <div id="geminiResultContent" class="gemini-result__content"></div>
+                </div>
+            </div>
+        </section>
+
+        <div id="copyNotification" class="hidden copy-notification">
+            Copied to clipboard!
+        </div>
+
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const inputText = document.getElementById('inputText');
+            const outputText = document.getElementById('outputText');
+            const deidentifyButton = document.getElementById('deidentifyButton');
+            const copyButton = document.getElementById('copyButton');
+            const clearButton = document.getElementById('clearButton');
+            const copyNotification = document.getElementById('copyNotification');
+
+            // Gemini section elements
+            const geminiActions = document.getElementById('geminiActions');
+            const summarizeButton = document.getElementById('summarizeButton');
+            const simplifyButton = document.getElementById('simplifyButton');
+            const extractButton = document.getElementById('extractButton');
+            const narrativeButton = document.getElementById('narrativeButton');
+            const geminiLoading = document.getElementById('geminiLoading');
+            const geminiResult = document.getElementById('geminiResult');
+            const geminiResultTitle = document.getElementById('geminiResultTitle');
+            const geminiResultContent = document.getElementById('geminiResultContent');
+
+            const callApi = async (text, action) => {
+                const response = await fetch('/.netlify/functions/scrub', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ text, action }),
+                });
+                return response.json();
+            };
+
+            deidentifyButton.addEventListener('click', async () => {
+                const text = inputText.value;
+                if (!text) return;
+
+                const graphic = document.getElementById('graphic');
+                graphic.classList.remove('hidden');
+
+                const canvas = document.getElementById('scrubbingCanvas');
+                const ctx = canvas.getContext('2d');
+                let width = canvas.width;
+                let height = canvas.height;
+
+                const animate = () => {
+                    ctx.clearRect(0, 0, width, height);
+                    ctx.font = '16px var(--font-sans)';
+                    ctx.fillStyle = 'var(--color-foreground)';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('Scrubbing in progress...', width / 2, height / 2 - 20);
+
+                    let progress = 0;
+                    const interval = setInterval(() => {
+                        progress += 10;
+                        ctx.clearRect(0, 0, width, height);
+                        ctx.fillText('Scrubbing in progress...', width / 2, height / 2 - 20);
+                        ctx.fillStyle = 'var(--color-primary)';
+                        ctx.fillRect(width / 2 - 50, height / 2, progress, 10);
+                        if (progress >= 100) {
+                            clearInterval(interval);
+                            ctx.clearRect(0, 0, width, height);
+                            ctx.fillStyle = 'var(--color-success)';
+                            ctx.fillText('Scrubbing complete!', width / 2, height / 2);
+                        }
+                    }, 100);
+                };
+
+                animate();
+
+                const { cleanedText } = await callApi(text, 'deidentify');
+                outputText.value = cleanedText;
+                geminiActions.classList.remove('hidden');
+            });
+
+            const handleGeminiAction = async (action, title) => {
+                const text = outputText.value;
+                if (!text) return;
+
+                geminiLoading.classList.remove('hidden');
+                geminiResult.classList.add('hidden');
+
+                const { geminiText } = await callApi(text, action);
+
+                geminiResultTitle.textContent = title;
+                geminiResultContent.innerHTML = geminiText; 
+                geminiLoading.classList.add('hidden');
+                geminiResult.classList.remove('hidden');
+            };
+
+            summarizeButton.addEventListener('click', () => handleGeminiAction('summarize', 'Summary'));
+            simplifyButton.addEventListener('click', () => handleGeminiAction('simplify', 'Simplified Text'));
+            extractButton.addEventListener('click', () => handleGeminiAction('extract', 'Extracted Information'));
+            narrativeButton.addEventListener('click', () => handleGeminiAction('narrative', 'Narrative'));
+
+            copyButton.addEventListener('click', () => {
+                outputText.select();
+                document.execCommand('copy');
+                copyNotification.classList.remove('hidden');
+                setTimeout(() => {
+                    copyNotification.classList.add('hidden');
+                }, 2000);
+            });
+
+            clearButton.addEventListener('click', () => {
+                inputText.value = '';
+                outputText.value = '';
+                geminiActions.classList.add('hidden');
+                geminiResult.classList.add('hidden');
+                const graphic = document.getElementById('graphic');
+                graphic.classList.add('hidden');
+            });
+        });
+    </script>
+</body>
+</html>
