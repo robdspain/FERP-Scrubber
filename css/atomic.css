@@ -186,6 +186,18 @@ body {
   box-shadow: 0 4px 16px -4px rgba(0, 0, 0, 0.15), 0 12px 32px -8px rgba(0, 0, 0, 0.2);
 }
 
+.btn-orange {
+  background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+  color: white;
+  box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.1), 0 6px 20px -3px rgba(249, 115, 22, 0.4);
+  font-weight: 700;
+}
+
+.btn-orange:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px -4px rgba(0, 0, 0, 0.15), 0 12px 32px -8px rgba(249, 115, 22, 0.5);
+}
+
 .btn-sm {
   padding: 0.5rem 1rem;
   font-size: 0.8125rem;

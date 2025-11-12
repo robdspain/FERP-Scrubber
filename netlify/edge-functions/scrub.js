@@ -178,6 +178,7 @@ export default async (req, context) => {
     const gateway = (typeof Deno !== 'undefined' && Deno.env?.get('AI_GATEWAY_URL')) ||
                     (typeof process !== 'undefined' && process.env?.AI_GATEWAY_URL);
 
+    let meta = { path: 'gateway', model: undefined };
     if (gateway) {
       try {
         const resp = await fetch(`${gateway.replace(/\/$/, '')}/ai`, {
@@ -196,7 +197,7 @@ export default async (req, context) => {
           const data = await resp.json();
           const raw = data?.content ?? data?.text ?? data?.geminiText ?? '';
           const safe = stripUrls(String(raw || ''));
-          return new Response(JSON.stringify({ geminiText: safe }), { headers: { 'Content-Type': 'application/json' } });
+          return new Response(JSON.stringify({ geminiText: safe, meta }), { headers: { 'Content-Type': 'application/json' } });
         }
         // fall through to direct call on non-OK
       } catch (_) {
@@ -207,7 +208,7 @@ export default async (req, context) => {
     // Fallback: call Gemini directly if API key is present (primarily for dev/testing).
     const getEnv = (name) => (typeof Deno !== 'undefined' && Deno.env?.get(name)) || (typeof process !== 'undefined' && process.env?.[name]);
     const apiKey = getEnv('GEMINI_API_KEY');
-    const modelName = getEnv('GEMINI_MODEL') || 'gemini-1.5-flash';
+    const modelName = getEnv('GEMINI_MODEL') || 'gemini-2.5-flash';
     if (!apiKey) {
       return new Response(JSON.stringify({
         error: 'AI gateway not configured and no direct API key available',
@@ -215,6 +216,7 @@ export default async (req, context) => {
       }), { status: 500, headers: { 'Content-Type': 'application/json' } });
     }
 
+    meta = { path: 'direct', model: modelName };
     const prompt = [
       systemPolicy,
       '',
@@ -231,7 +233,15 @@ export default async (req, context) => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          contents: [{ role: 'user', parts: [{ text: prompt }] }]
+          systemInstruction: { role: 'system', parts: [{ text: systemPolicy }] },
+          contents: [{ role: 'user', parts: [{ text: [
+            'TASK:',
+            directions && directions.trim() ? sanitizeForAI(directions.trim()) : `Perform action: ${action}.`,
+            '',
+            'CONTENT:',
+            sanitizeForAI(cleanedText)
+          ].join('\n') }] }],
+          generationConfig: { response_mime_type: 'application/json' }
         })
       });
       if (!resp.ok) {
@@ -241,8 +251,7 @@ export default async (req, context) => {
       const parts = data?.candidates?.[0]?.content?.parts || [];
       const textOut = parts.map((p) => p.text).filter(Boolean).join('\n');
       const safe = stripUrls(String(textOut || ''));
-      // Best-effort schema: coerce into { content }
-      return new Response(JSON.stringify({ geminiText: safe }), { headers: { 'Content-Type': 'application/json' } });
+      return new Response(JSON.stringify({ geminiText: safe, meta }), { headers: { 'Content-Type': 'application/json' } });
     } catch (e) {
       return new Response(JSON.stringify({ error: 'Direct Gemini call failed' }), { status: 502, headers: { 'Content-Type': 'application/json' } });
     }
