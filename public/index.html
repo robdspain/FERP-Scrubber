@@ -14,6 +14,9 @@
     <div class="container">
         
         <header class="header">
+            <div class="header__actions" style="display:flex; justify-content:flex-end; gap: var(--spacing-md);">
+                <button id="themeToggle" class="button button--tertiary" aria-pressed="false" aria-label="Toggle theme">Switch to Light</button>
+            </div>
             <h1 class="header__title">PII & PHI Scrubber</h1>
             <p class="header__subtitle">Paste text to automatically redact sensitive information.</p>
         </header>
@@ -84,6 +87,33 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            // Theme handling
+            const root = document.documentElement;
+            const themeToggle = document.getElementById('themeToggle');
+            const getPreferredTheme = () => {
+                const saved = localStorage.getItem('theme');
+                if (saved === 'light' || saved === 'dark') return saved;
+                return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            };
+            const applyTheme = (theme) => {
+                if (theme === 'light') {
+                    root.setAttribute('data-theme', 'light');
+                    if (themeToggle) { themeToggle.textContent = 'Switch to Dark'; themeToggle.setAttribute('aria-pressed', 'true'); }
+                } else {
+                    root.removeAttribute('data-theme');
+                    if (themeToggle) { themeToggle.textContent = 'Switch to Light'; themeToggle.setAttribute('aria-pressed', 'false'); }
+                }
+            };
+            let currentTheme = getPreferredTheme();
+            applyTheme(currentTheme);
+            if (themeToggle) {
+                themeToggle.addEventListener('click', () => {
+                    currentTheme = currentTheme === 'light' ? 'dark' : 'light';
+                    localStorage.setItem('theme', currentTheme);
+                    applyTheme(currentTheme);
+                });
+            }
+
             const inputText = document.getElementById('inputText');
             const outputText = document.getElementById('outputText');
             const deidentifyButton = document.getElementById('deidentifyButton');
