@@ -19,6 +19,7 @@
                     <span class="theme-toggle__thumb" aria-hidden="true"></span>
                     <span class="visually-hidden">Toggle theme</span>
                 </button>
+                <button id="aboutButton" class="button button--tertiary">About</button>
             </div>
             <h1 class="header__title">FERPA Scrubber</h1>
             <p class="header__subtitle">Paste text to automatically protect student information. AI only sees de-identified text.</p>
@@ -56,6 +57,7 @@
                 <p class="card__subtitle">Choose which items to tokenize + encrypt at the edge.</p>
                 <div class="rules-grid">
                     <label class="rule"><input type="checkbox" id="ruleEmail" checked> Email</label>
+                    <label class="rule"><input type="checkbox" id="ruleStudentEmail" checked> Student Email (.edu/k12)</label>
                     <label class="rule"><input type="checkbox" id="rulePhone" checked> Phone</label>
                     <label class="rule"><input type="checkbox" id="ruleSSN" checked> SSN</label>
                     <label class="rule"><input type="checkbox" id="ruleAddress" checked> Address</label>
@@ -112,6 +114,31 @@
             Copied to clipboard!
         </div>
 
+        <!-- About Modal -->
+        <div id="aboutModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="aboutTitle">
+            <div class="modal__content card">
+                <div class="modal__header" style="display:flex; justify-content:space-between; align-items:center; gap:1rem;">
+                    <h2 id="aboutTitle" class="card__title">About FERPA Scrubber</h2>
+                    <button id="aboutClose" class="button button--tertiary" aria-label="Close about">Close</button>
+                </div>
+                <div class="modal__body gemini-result__content" style="background: transparent; border: none;">
+                    <p><strong>How your data is handled</strong></p>
+                    <ul>
+                        <li>On De-identify, the Edge Function replaces sensitive items with tokens (e.g., [[FERPA:EMAIL:1]]).</li>
+                        <li>Original values are encrypted on the Edge using AES‑256‑GCM; the key is returned to your browser.</li>
+                        <li>AI features only receive the de‑identified text — encrypted values and keys are never sent to the LLM.</li>
+                        <li>Decryption occurs on the Edge only when you click Decrypt, using the key and map held in your browser memory.</li>
+                        <li>No sensitive plaintext is stored server-side.</li>
+                    </ul>
+                    <p style="margin-top:1rem"><strong>What you control</strong></p>
+                    <ul>
+                        <li>Select which items to protect (emails, student emails, phones, SSNs, addresses, names, student IDs, dates).</li>
+                        <li>Optionally switch themes for readability.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <script>
@@ -119,6 +146,9 @@
             // Theme handling
             const root = document.documentElement;
             const themeToggle = document.getElementById('themeToggle');
+            const aboutButton = document.getElementById('aboutButton');
+            const aboutModal = document.getElementById('aboutModal');
+            const aboutClose = document.getElementById('aboutClose');
             const getPreferredTheme = () => {
                 const saved = localStorage.getItem('theme');
                 if (saved === 'light' || saved === 'dark') return saved;
@@ -143,6 +173,13 @@
                 });
             }
 
+            // About modal
+            const openAbout = () => { aboutModal.classList.remove('hidden'); };
+            const closeAbout = () => { aboutModal.classList.add('hidden'); };
+            aboutButton?.addEventListener('click', openAbout);
+            aboutClose?.addEventListener('click', closeAbout);
+            aboutModal?.addEventListener('click', (e) => { if (e.target === aboutModal) closeAbout(); });
+
             const inputText = document.getElementById('inputText');
             const outputText = document.getElementById('outputText');
             const deidentifyButton = document.getElementById('deidentifyButton');
@@ -158,6 +195,7 @@
             const getSelectedRules = () => {
                 const rules = [];
                 if (document.getElementById('ruleEmail')?.checked) rules.push('EMAIL');
+                if (document.getElementById('ruleStudentEmail')?.checked) rules.push('STUDENT_EMAIL');
                 if (document.getElementById('rulePhone')?.checked) rules.push('PHONE');
                 if (document.getElementById('ruleSSN')?.checked) rules.push('SSN');
                 if (document.getElementById('ruleAddress')?.checked) rules.push('ADDRESS');

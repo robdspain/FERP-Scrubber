@@ -408,6 +408,10 @@ body {
 :root[data-theme="light"] .progress { background: #eef2f7; }
 .progress__bar { position: absolute; top: 0; left: 0; height: 100%; width: 0; background: linear-gradient(90deg, var(--color-primary) 0%, var(--color-primary-700) 100%); transition: width 160ms ease; }
 
+/* Modal */
+.modal { position: fixed; inset: 0; display: grid; place-items: center; background: rgba(0,0,0,0.5); z-index: 50; }
+.modal__content { width: min(800px, 92vw); }
+
 /* Header actions */
 .header__actions {
     display: flex;

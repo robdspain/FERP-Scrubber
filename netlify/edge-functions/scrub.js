@@ -51,16 +51,23 @@ export default async (req, context) => {
     let cleaned = input;
     const found = [];
     const ALL_RULES = {
+      // Student emails (prioritized to avoid double tokenization when EMAIL is also selected)
+      STUDENT_EMAIL: [{ type: 'STUDENT_EMAIL', regex: /[a-zA-Z0-9._%+-]+@(?:(?:student\.)?[A-Za-z0-9.-]*k12\.[A-Za-z.]+|[A-Za-z0-9.-]+\.edu)\b/gi }],
       EMAIL: [{ type: 'EMAIL', regex: /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g }],
       PHONE: [{ type: 'PHONE', regex: /\b\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b/g }],
       SSN: [{ type: 'SSN', regex: /\b\d{3}-\d{2}-\d{4}\b/g }],
       ADDRESS: [{ type: 'ADDRESS', regex: /\b\d{1,5}\s+[A-Za-z0-9'.\-]+(?:\s+[A-Za-z0-9'.\-]+){1,3}\b/g }],
-      NAME: [{ type: 'NAME', regex: /\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,2})\b/g, group: 1 }],
+      // Names: First [M.] Last(-Hyphen), supports O' and Mc prefixes; also Last, First M.
+      NAME: [
+        { type: 'NAME', regex: /\b([A-Z][a-z]+(?:\s+[A-Z]\.)?\s+(?:O'|Mc)?[A-Z][a-z]+(?:-[A-Z][a-z]+)?)\b/g, group: 1 },
+        { type: 'NAME', regex: /\b((?:O'|Mc)?[A-Z][a-z]+(?:-[A-Z][a-z]+)?,\s+[A-Z][a-z]+(?:\s+[A-Z]\.)?)\b/g, group: 1 },
+      ],
       STUDENT_ID: [{ type: 'STUDENT_ID', regex: /(?:(?:Student\s*ID|SID|ID)\s*[:#]?\s*)(\b\d{6,10}\b)/gi, group: 1 }],
       DATE: [
         { type: 'DATE', regex: /\b\d{4}-\d{2}-\d{2}\b/g },                               // 2024-10-31
         { type: 'DATE', regex: /\b\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}\b/g },             // 10/31/2024
         { type: 'DATE', regex: /\b(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+\d{1,2},\s+\d{4}\b/gi },
+        { type: 'DATE', regex: /\b\d{1,2}\s+(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+\d{4}\b/gi }, // 31 Oct 2024
       ],
     };
 
