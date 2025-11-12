@@ -45,7 +45,7 @@ async function decryptText(cB64, ivB64, key) {
 }
 
 export default async (req, context) => {
-  const { text, action, key: keyB64, tokenMap, rules, directions } = await req.json();
+  const { text, action, key: keyB64, tokenMap, rules, directions, customRules } = await req.json();
 
   // Replace FERPA-like data with tokens and encrypt originals
   const deidentifyAndEncrypt = async (input) => {
@@ -83,6 +83,8 @@ export default async (req, context) => {
       LICENSE_PLATE: [ { type: 'LICENSE_PLATE', regex: /\b(?:License\s*Plate|Plate)\s*[:#-]?\s*([A-Z0-9 -]{5,10})\b/gi, group: 1 } ],
       // Usernames or login IDs
       USERNAME: [ { type: 'USERNAME', regex: /\b(?:Username|Login)\s*[:#-]?\s*([A-Za-z0-9._-]{3,})\b/gi, group: 1 } ],
+      // Biometric-sensitive lines (mask entire line when these appear)
+      BIOMETRIC: [ { type: 'BIOMETRIC', regex: /^.*\b(?:fingerprint|retina\s+scan|voiceprint|biometric\s+id)\b.*$/gim } ],
       DATE: [
         { type: 'DATE', regex: /\b\d{4}-\d{2}-\d{2}\b/g },                               // 2024-10-31
         { type: 'DATE', regex: /\b\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}\b/g },             // 10/31/2024
@@ -94,6 +96,13 @@ export default async (req, context) => {
     // Determine which rule buckets are enabled from client; if none provided, enable all.
     const ruleKeys = Array.isArray(rules) && rules.length ? rules : Object.keys(ALL_RULES);
     const selectedPatterns = ruleKeys.flatMap((k) => ALL_RULES[k] || []);
+    // Compile custom literal phrase rules to case-insensitive regex and include
+    const escapeRegExp = (s = '') => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const customPatterns = (Array.isArray(customRules) ? customRules : [])
+      .map((raw) => String(raw || '').trim())
+      .filter((s) => s.length > 0)
+      .map((phrase) => ({ type: 'CUSTOM', name: phrase, regex: new RegExp(escapeRegExp(phrase), 'gi') }));
+    if (customPatterns.length) selectedPatterns.push(...customPatterns);
 
     // Apply requested patterns
     for (const { type, regex, group } of selectedPatterns) {
@@ -269,7 +278,16 @@ export default async (req, context) => {
       const data = await resp.json();
       const parts = data?.candidates?.[0]?.content?.parts || [];
       const textOut = parts.map((p) => p.text).filter(Boolean).join('\n');
-      const safe = stripUrls(String(textOut || ''));
+      // Parse JSON response to extract content from the schema
+      let content = textOut;
+      try {
+        const parsed = JSON.parse(textOut);
+        content = parsed.content || textOut;
+      } catch {
+        // If not valid JSON, use as-is
+        content = textOut;
+      }
+      const safe = stripUrls(String(content || ''));
       return new Response(JSON.stringify({ geminiText: safe, meta }), { headers: { 'Content-Type': 'application/json' } });
     } catch (e) {
       return new Response(JSON.stringify({ error: 'Direct Gemini call failed' }), { status: 502, headers: { 'Content-Type': 'application/json' } });
