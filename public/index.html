@@ -33,9 +33,15 @@
         <main class="main-content">
             <div class="io-grid">
                 <div class="io-card">
-                    <label for="inputText" class="io-card__label">Input Text</label>
-                    <p class="io-card__description">Paste your sensitive text here.</p>
-                    <textarea id="inputText" class="io-card__textarea" placeholder="Paste information that is full of health and personal information..."></textarea>
+                    <label for="directionsInput" class="io-card__label">Directions</label>
+                    <p class="io-card__description">Optional instructions for the AI (e.g., summarize key points for parents).</p>
+                    <input id="directionsInput" class="io-card__textarea" style="height: 3.25rem" placeholder="e.g., Summarize in 3 bullets for a parent newsletter" />
+
+                    <div style="height: var(--spacing-lg)"></div>
+
+                    <label for="contentInput" class="io-card__label">Content</label>
+                    <p class="io-card__description">Paste your sensitive student-related text here. It will be tokenized and encrypted at the edge.</p>
+                    <textarea id="contentInput" class="io-card__textarea" placeholder="Paste student-related content here..."></textarea>
                 </div>
 
                 <div class="io-card">
@@ -180,7 +186,8 @@
             aboutClose?.addEventListener('click', closeAbout);
             aboutModal?.addEventListener('click', (e) => { if (e.target === aboutModal) closeAbout(); });
 
-            const inputText = document.getElementById('inputText');
+            const directionsInput = document.getElementById('directionsInput');
+            const contentInput = document.getElementById('contentInput');
             const outputText = document.getElementById('outputText');
             const deidentifyButton = document.getElementById('deidentifyButton');
             const copyButton = document.getElementById('copyButton');
@@ -249,7 +256,7 @@
             let lastTokenMap = null; // { token: { c, iv } }
 
             deidentifyButton.addEventListener('click', async () => {
-                const text = inputText.value;
+                const text = contentInput.value;
                 if (!text) return;
 
                 const graphic = document.getElementById('graphic');
@@ -301,7 +308,8 @@
                 geminiLoading.classList.remove('hidden');
                 geminiResult.classList.add('hidden');
 
-                const { geminiText } = await callApi(text, action);
+                const directions = directionsInput?.value || '';
+                const { geminiText } = await callApi(text, action, { directions });
 
                 geminiResultTitle.textContent = title;
                 geminiResultContent.innerHTML = geminiText; 
@@ -324,7 +332,8 @@
             });
 
             clearButton.addEventListener('click', () => {
-                inputText.value = '';
+                directionsInput.value = '';
+                contentInput.value = '';
                 outputText.value = '';
                 geminiActions.classList.add('hidden');
                 geminiResult.classList.add('hidden');

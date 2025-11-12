@@ -44,7 +44,7 @@ async function decryptText(cB64, ivB64, key) {
 }
 
 export default async (req, context) => {
-  const { text, action, key: keyB64, tokenMap, rules } = await req.json();
+  const { text, action, key: keyB64, tokenMap, rules, directions } = await req.json();
 
   // Replace FERPA-like data with tokens and encrypt originals
   const deidentifyAndEncrypt = async (input) => {
@@ -143,19 +143,23 @@ export default async (req, context) => {
     const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
 
     let prompt;
-    switch (action) {
-      case 'summarize':
-        prompt = `Summarize the following text: ${cleanedText}`;
-        break;
-      case 'simplify':
-        prompt = `Simplify the following text for a 6th-grade reading level: ${cleanedText}`;
-        break;
-      case 'extract':
-        prompt = `Extract key information from the following text: ${cleanedText}`;
-        break;
-      case 'narrative':
-        prompt = `Create a narrative from the following text: ${cleanedText}`;
-        break;
+    if (directions && directions.trim().length > 0) {
+      prompt = `${directions.trim()}\n\nCONTENT:\n${cleanedText}`;
+    } else {
+      switch (action) {
+        case 'summarize':
+          prompt = `Summarize the following text:\n\n${cleanedText}`;
+          break;
+        case 'simplify':
+          prompt = `Simplify the following text for a 6th-grade reading level:\n\n${cleanedText}`;
+          break;
+        case 'extract':
+          prompt = `Extract key information from the following text:\n\n${cleanedText}`;
+          break;
+        case 'narrative':
+          prompt = `Create a narrative from the following text:\n\n${cleanedText}`;
+          break;
+      }
     }
 
     try {
