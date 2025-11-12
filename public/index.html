@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PII & PHI Scrubber with Gemini</title>
+    <title>FERPA Scrubber</title>
     <link href="/css/atomic.css" rel="stylesheet">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -20,13 +20,13 @@
                     <span class="visually-hidden">Toggle theme</span>
                 </button>
             </div>
-            <h1 class="header__title">PII & PHI Scrubber</h1>
-            <p class="header__subtitle">Paste text to automatically redact sensitive information.</p>
+            <h1 class="header__title">FERPA Scrubber</h1>
+            <p class="header__subtitle">Paste text to automatically protect student information. AI only sees de-identified text.</p>
         </header>
 
         <div class="disclaimer">
             <p class="disclaimer__title">Important Disclaimer</p>
-            <p class="disclaimer__text">This tool is for demonstration only. It is <span class="font-semibold">NOT</span> a substitute for a professional, HIPAA-compliant de-identification service. It may miss sensitive data or remove data incorrectly. Always manually review the output before any official use.</p>
+            <p class="disclaimer__text">This tool is for demonstration only. It is <span class="font-semibold">NOT</span> a substitute for a professional FERPA-compliant de-identification service. It may miss sensitive data or remove data incorrectly. Always manually review the output before any official use.</p>
         </div>
 
         <main class="main-content">
@@ -49,6 +49,31 @@
                 <button id="copyButton" class="button button--secondary">Copy Output</button>
                 <button id="decryptButton" class="button button--tertiary">Decrypt Output</button>
                 <button id="clearButton" class="button button--tertiary">Clear All</button>
+            </div>
+
+            <div class="io-card" id="rulesCard">
+                <h3 class="card__title">Rules</h3>
+                <p class="card__subtitle">Choose which items to tokenize + encrypt at the edge.</p>
+                <div class="rules-grid">
+                    <label class="rule"><input type="checkbox" id="ruleEmail" checked> Email</label>
+                    <label class="rule"><input type="checkbox" id="rulePhone" checked> Phone</label>
+                    <label class="rule"><input type="checkbox" id="ruleSSN" checked> SSN</label>
+                    <label class="rule"><input type="checkbox" id="ruleAddress" checked> Address</label>
+                    <label class="rule"><input type="checkbox" id="ruleName" checked> Names</label>
+                    <label class="rule"><input type="checkbox" id="ruleStudentId" checked> Student ID</label>
+                    <label class="rule"><input type="checkbox" id="ruleDate" checked> Dates</label>
+                </div>
+            </div>
+
+            <div class="status" id="opStatus">
+                <div class="status__row" id="encRow" hidden>
+                    <span class="status__label">Encrypting & scrubbing…</span>
+                    <div class="progress"><div class="progress__bar" id="encProgress" style="width:0%"></div></div>
+                </div>
+                <div class="status__row" id="decRow" hidden>
+                    <span class="status__label">Decrypting…</span>
+                    <div class="progress"><div class="progress__bar" id="decProgress" style="width:0%"></div></div>
+                </div>
             </div>
         </main>
         
@@ -125,6 +150,39 @@
             const clearButton = document.getElementById('clearButton');
             const copyNotification = document.getElementById('copyNotification');
             const decryptButton = document.getElementById('decryptButton');
+            const encRow = document.getElementById('encRow');
+            const decRow = document.getElementById('decRow');
+            const encProgress = document.getElementById('encProgress');
+            const decProgress = document.getElementById('decProgress');
+
+            const getSelectedRules = () => {
+                const rules = [];
+                if (document.getElementById('ruleEmail')?.checked) rules.push('EMAIL');
+                if (document.getElementById('rulePhone')?.checked) rules.push('PHONE');
+                if (document.getElementById('ruleSSN')?.checked) rules.push('SSN');
+                if (document.getElementById('ruleAddress')?.checked) rules.push('ADDRESS');
+                if (document.getElementById('ruleName')?.checked) rules.push('NAME');
+                if (document.getElementById('ruleStudentId')?.checked) rules.push('STUDENT_ID');
+                if (document.getElementById('ruleDate')?.checked) rules.push('DATE');
+                return rules;
+            };
+
+            const runProgress = (rowEl, barEl) => {
+                rowEl.hidden = false;
+                let p = 0;
+                barEl.style.width = '0%';
+                const id = setInterval(() => {
+                    p = Math.min(p + Math.random() * 12 + 5, 92);
+                    barEl.style.width = `${p.toFixed(0)}%`;
+                }, 150);
+                return {
+                    complete: () => {
+                        clearInterval(id);
+                        barEl.style.width = '100%';
+                        setTimeout(() => { rowEl.hidden = true; barEl.style.width = '0%'; }, 800);
+                    }
+                };
+            };
 
             // Gemini section elements
             const geminiActions = document.getElementById('geminiActions');
@@ -137,13 +195,13 @@
             const geminiResultTitle = document.getElementById('geminiResultTitle');
             const geminiResultContent = document.getElementById('geminiResultContent');
 
-            const callApi = async (text, action) => {
+            const callApi = async (text, action, extra = {}) => {
                 const response = await fetch('/scrub', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ text, action }),
+                    body: JSON.stringify({ text, action, ...extra }),
                 });
                 return response.json();
             };
@@ -188,12 +246,14 @@
                 };
 
                 animate();
-
-                const { cleanedText, key, tokenMap } = await callApi(text, 'deidentify');
+                const encProg = runProgress(encRow, encProgress);
+                const rules = getSelectedRules();
+                const { cleanedText, key, tokenMap } = await callApi(text, 'deidentify', { rules });
                 outputText.value = cleanedText;
                 lastKey = key;
                 lastTokenMap = tokenMap;
                 geminiActions.classList.remove('hidden');
+                encProg.complete();
             });
 
             const handleGeminiAction = async (action, title) => {
@@ -243,6 +303,7 @@
                         alert('Nothing to decrypt. Please de-identify input first.');
                         return;
                     }
+                    const decProg = runProgress(decRow, decProgress);
                     const response = await fetch('/scrub', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -251,7 +312,9 @@
                     const data = await response.json();
                     if (data.decryptedText) {
                         outputText.value = data.decryptedText;
+                        decProg.complete();
                     } else if (data.error) {
+                        decProg.complete();
                         alert('Decrypt failed.');
                     }
                 });

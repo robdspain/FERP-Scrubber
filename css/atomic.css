@@ -389,3 +389,61 @@ body {
 .hidden {
     display: none;
 }
+
+/* Rules grid */
+.rules-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--spacing-md);
+}
+@media (min-width: 768px) { .rules-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.rule { color: var(--color-foreground); display: flex; align-items: center; gap: 0.5rem; }
+.rule input { accent-color: var(--color-primary); }
+
+/* Operation status + progress */
+.status { display: grid; gap: var(--spacing-md); margin-top: var(--spacing-lg); }
+.status__row { display: grid; grid-template-columns: 160px 1fr; align-items: center; gap: var(--spacing-md); }
+.status__label { color: var(--color-muted-foreground); font-size: 0.9rem; }
+.progress { position: relative; width: 100%; height: 10px; background: rgba(255,255,255,0.06); border: 1px solid var(--color-border); border-radius: 999px; overflow: hidden; }
+:root[data-theme="light"] .progress { background: #eef2f7; }
+.progress__bar { position: absolute; top: 0; left: 0; height: 100%; width: 0; background: linear-gradient(90deg, var(--color-primary) 0%, var(--color-primary-700) 100%); transition: width 160ms ease; }
+
+/* Header actions */
+.header__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+}
+
+/* Theme toggle (compact switch) */
+.theme-toggle {
+    --toggle-track: #1b2236;
+    --toggle-thumb: #FEF3C7;
+    position: relative;
+    width: 46px;
+    height: 26px;
+    border-radius: 999px;
+    background: var(--toggle-track);
+    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-1);
+    padding: 0;
+    cursor: pointer;
+}
+.theme-toggle:focus-visible { outline: none; box-shadow: var(--ring); }
+.theme-toggle__thumb {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 20px;
+    height: 20px;
+    background: var(--toggle-thumb);
+    border-radius: 50%;
+    transition: transform 160ms ease, background-color 160ms ease;
+}
+.theme-toggle[data-theme-state="light"] .theme-toggle__thumb { transform: translateX(20px); }
+
+:root[data-theme="light"] .theme-toggle { --toggle-track: #e2e8f0; --toggle-thumb: #1F4D3F; }
+
+/* Light mode contrast fixes */
+:root[data-theme="light"] .disclaimer { color: var(--color-foreground); border-left-color: rgba(31,77,63,0.45); }

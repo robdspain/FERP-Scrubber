@@ -44,25 +44,46 @@ async function decryptText(cB64, ivB64, key) {
 }
 
 export default async (req, context) => {
-  const { text, action, key: keyB64, tokenMap } = await req.json();
+  const { text, action, key: keyB64, tokenMap, rules } = await req.json();
 
   // Replace FERPA-like data with tokens and encrypt originals
   const deidentifyAndEncrypt = async (input) => {
     let cleaned = input;
     const found = [];
-    const patterns = [
-      { type: 'EMAIL', regex: /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g },
-      { type: 'PHONE', regex: /\b\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b/g },
-      { type: 'SSN', regex: /\b\d{3}-\d{2}-\d{4}\b/g },
-      { type: 'ADDRESS', regex: /\b\d{1,5}\s+[A-Za-z0-9'.\-]+(?:\s+[A-Za-z0-9'.\-]+){1,3}\b/g },
-    ];
+    const ALL_RULES = {
+      EMAIL: [{ type: 'EMAIL', regex: /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g }],
+      PHONE: [{ type: 'PHONE', regex: /\b\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b/g }],
+      SSN: [{ type: 'SSN', regex: /\b\d{3}-\d{2}-\d{4}\b/g }],
+      ADDRESS: [{ type: 'ADDRESS', regex: /\b\d{1,5}\s+[A-Za-z0-9'.\-]+(?:\s+[A-Za-z0-9'.\-]+){1,3}\b/g }],
+      NAME: [{ type: 'NAME', regex: /\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,2})\b/g, group: 1 }],
+      STUDENT_ID: [{ type: 'STUDENT_ID', regex: /(?:(?:Student\s*ID|SID|ID)\s*[:#]?\s*)(\b\d{6,10}\b)/gi, group: 1 }],
+      DATE: [
+        { type: 'DATE', regex: /\b\d{4}-\d{2}-\d{2}\b/g },                               // 2024-10-31
+        { type: 'DATE', regex: /\b\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}\b/g },             // 10/31/2024
+        { type: 'DATE', regex: /\b(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+\d{1,2},\s+\d{4}\b/gi },
+      ],
+    };
 
-    for (const { type, regex } of patterns) {
-      cleaned = cleaned.replace(regex, (match) => {
+    const ruleKeys = Array.isArray(rules) && rules.length ? rules : Object.keys(ALL_RULES);
+    const selectedPatterns = ruleKeys.flatMap((k) => ALL_RULES[k] || []);
+
+    for (const { type, regex, group } of selectedPatterns) {
+      cleaned = cleaned.replace(regex, (...args) => {
+        const match = args[0];
         const idx = found.filter(f => f.type === type).length + 1;
         const token = `[[FERPA:${type}:${idx}]]`;
-        found.push({ type, token, value: match });
-        return token;
+        if (group) {
+          const groups = args;
+          const full = match;
+          const captured = args[group];
+          if (!captured) return match;
+          found.push({ type, token, value: captured });
+          // Replace only the captured portion within the full match
+          return full.replace(captured, token);
+        } else {
+          found.push({ type, token, value: match });
+          return token;
+        }
       });
     }
 

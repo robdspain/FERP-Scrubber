@@ -1,10 +1,18 @@
-# PII & PHI Scrubber with Gemini
+# FERPA Scrubber
 
-This application is a PII & PHI scrubber that uses a Netlify edge function to redact sensitive information from text. It also uses the Gemini API to perform AI actions on the de-identified text.
+This application is a FERPA-focused scrubber that uses a Netlify Edge Function to tokenize and encrypt sensitive student information. It also uses the Gemini API to perform AI actions on the de-identified text only.
 
-The application provides a graphic display of the scrubbing process to give the user full transparency of how it is functioning.
+The application provides clear progress indicators during encryption and decryption to give the user transparency of how it is functioning.
 
-The front-end has been refactored using Atomic Design principles for better maintainability and scalability.
+The front-end uses Atomic Design principles and supports light/dark themes with a Behavior School palette.
+
+## Security Model
+
+- Client sends raw text to the Edge Function for de-identification.
+- The Edge Function replaces matches (emails, phones, SSNs, addresses, names, student IDs, dates) with tokens and encrypts original values with AES‑256‑GCM.
+- The client receives `cleanedText`, a base64url key, and an encrypted token map.
+- AI actions use only `cleanedText` — no FERPA data is sent to the LLM.
+- When needed, the client can request decryption by sending the token map + key back to the Edge, which returns the reconstructed text.
 
 ## Running the application
 
