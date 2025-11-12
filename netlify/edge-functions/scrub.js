@@ -1,4 +1,5 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+// Secrets policy: no provider API keys in code or env here.
+// AI calls are proxied to an external gateway that retrieves secrets from a vault.
 
 // Utilities: base64url helpers
 const b64u = {
@@ -141,39 +142,71 @@ export default async (req, context) => {
     }
   }
 
-  // For AI actions, only use cleaned (non-sensitive) text provided by the client
+  // For AI actions, only use cleaned (non-sensitive) text provided by the client.
+  // Prompt safety: sanitize inputs, add a system policy, and request a constrained response.
+  const stripUrls = (s = '') => s.replace(/https?:\/\/\S+/gi, '[link removed]');
+  const sanitizeForAI = (s = '') => {
+    // Remove typical prompt-injection phrases/headers and URLs
+    const withoutUrls = stripUrls(s);
+    const blocked = /(ignore (?:all|previous|earlier) instructions|disregard|override|bypass|jailbreak|system:|developer message|assistant:|user:)/i;
+    return withoutUrls
+      .split(/\r?\n/)
+      .filter((line) => !blocked.test(line))
+      .join('\n');
+  };
+
+  const systemPolicy = (
+    'SYSTEM POLICY:\n' +
+    '- Never request or reveal real-world identifiers (names, emails, phone numbers, addresses, SSNs, student IDs, dates).\n' +
+    '- Do not ask the user to provide any sensitive data.\n' +
+    '- Preserve any tokens of the form [[FERPA:TYPE:N]] verbatim if present in the input; do not alter their formatting.\n' +
+    '- Do not include live URLs; if necessary, state [link removed].\n' +
+    '- Follow the required output schema strictly.'
+  );
+  const outputSchema = {
+    type: 'object',
+    properties: {
+      content: { type: 'string' },
+    },
+    required: ['content'],
+    additionalProperties: false,
+  };
+
+  // Forward to an external AI Gateway that fetches provider credentials from a vault.
   if (action === 'summarize' || action === 'simplify' || action === 'extract' || action === 'narrative') {
     const cleanedText = text || '';
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+    const gateway = (typeof Deno !== 'undefined' && Deno.env?.get('AI_GATEWAY_URL')) ||
+                    (typeof process !== 'undefined' && process.env?.AI_GATEWAY_URL);
 
-    let prompt;
-    if (directions && directions.trim().length > 0) {
-      prompt = `${directions.trim()}\n\nCONTENT:\n${cleanedText}`;
-    } else {
-      switch (action) {
-        case 'summarize':
-          prompt = `Summarize the following text:\n\n${cleanedText}`;
-          break;
-        case 'simplify':
-          prompt = `Simplify the following text for a 6th-grade reading level:\n\n${cleanedText}`;
-          break;
-        case 'extract':
-          prompt = `Extract key information from the following text:\n\n${cleanedText}`;
-          break;
-        case 'narrative':
-          prompt = `Create a narrative from the following text:\n\n${cleanedText}`;
-          break;
-      }
+    if (!gateway) {
+      return new Response(JSON.stringify({
+        error: 'AI gateway not configured',
+        hint: 'Set AI_GATEWAY_URL to a service that uses a vault to obtain provider credentials and call the model on your behalf.'
+      }), { status: 500, headers: { 'Content-Type': 'application/json' } });
     }
 
     try {
-      const result = await model.generateContent(prompt);
-      const response = await result.response;
-      const geminiText = await response.text();
-      return new Response(JSON.stringify({ geminiText }), { headers: { 'Content-Type': 'application/json' } });
-    } catch (error) {
-      return new Response(JSON.stringify({ error: 'Error calling Gemini API' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
+      const resp = await fetch(`${gateway.replace(/\/$/, '')}/ai`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action,
+          text: sanitizeForAI(cleanedText),
+          directions: sanitizeForAI(directions || ''),
+          system: systemPolicy,
+          schema: outputSchema,
+          format: 'json',
+        })
+      });
+      if (!resp.ok) {
+        return new Response(JSON.stringify({ error: 'AI gateway error' }), { status: 502, headers: { 'Content-Type': 'application/json' } });
+      }
+      const data = await resp.json();
+      const raw = data?.content ?? data?.text ?? data?.geminiText ?? '';
+      const safe = stripUrls(String(raw || ''));
+      return new Response(JSON.stringify({ geminiText: safe }), { headers: { 'Content-Type': 'application/json' } });
+    } catch (e) {
+      return new Response(JSON.stringify({ error: 'AI gateway unreachable' }), { status: 502, headers: { 'Content-Type': 'application/json' } });
     }
   }
 

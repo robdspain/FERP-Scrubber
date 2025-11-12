@@ -1,0 +1,49 @@
+
+> ferpa-scrubber@1.0.0 start /Users/robspain/Desktop/FERPA Scrubber
+> pnpm run build:css & netlify dev
+
+
+> ferpa-scrubber@1.0.0 build:css /Users/robspain/Desktop/FERPA Scrubber
+> pnpm exec tailwindcss -i ./css/atomic.css -o ./public/css/atomic.css --watch
+
+≈ tailwindcss v4.1.17
+
+⬥ Injecting environment variable values for all scopes
+Failed to fetch AI Gateway token for site d5cdf5a7-82ed-460c-8d5b-dbae4b897706: HTTP 401: Unauthorized
+⬥ Ignored general context env var: LANG (defined in process)
+⬥ Ignored project settings env var: GEMINI_API_KEY (defined in .env file)
+⬥ Injected shared env vars: MAILGUN_API_KEY, MAILGUN_DOMAIN
+⬥ Injected .env file env vars: GEMINI_API_KEY
+⬥ No app server detected. Using simple static server
+⬥ Running static server from "FERPA Scrubber/public"
+⬥ Setting up local dev server
+[36m[1m​[22m[39m
+[36m[1m❯ Installing extensions[22m[39m
+   - neon
+
+⬥ Static server listening to 3999
+
+   ╭─────────────────────── ⬥  ────────────────────────╮
+   │                                                   │
+   │   Local dev server ready: http://localhost:8888   │
+   │                                                   │
+   ╰───────────────────────────────────────────────────╯
+
+⬥ Loaded function scrub with warnings:
+  - The function is using the legacy CommonJS format. To start using ES modules, rename the function file to scrub.mjs. Refer to https://ntl.fyi/functions-runtime for more information.
+⬥ Loaded edge function scrub
+(node:75702) [DEP0060] DeprecationWarning: The `util._extend` API is deprecated. Please use Object.assign() instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+⬥ Reloading edge functions...
+⬥ Reloading function scrub...
+⬥ Reloaded function scrub with warnings:
+  - The function is using the legacy CommonJS format. To start using ES modules, rename the function file to scrub.mjs. Refer to https://ntl.fyi/functions-runtime for more information.
+⬥ Reloaded edge function scrub
+⬥ Reloading function scrub...
+⬥ Reloaded function scrub with warnings:
+  - The function is using the legacy CommonJS format. To start using ES modules, rename the function file to scrub.mjs. Refer to https://ntl.fyi/functions-runtime for more information.
+⬥ Reloading edge functions...
+⬥ Reloading function scrub...
+⬥ Reloaded function scrub with warnings:
+  - The function is using the legacy CommonJS format. To start using ES modules, rename the function file to scrub.mjs. Refer to https://ntl.fyi/functions-runtime for more information.
+⬥ Reloaded edge function scrub
