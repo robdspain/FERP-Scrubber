@@ -64,6 +64,25 @@ export default async (req, context) => {
         { type: 'NAME', regex: /\b((?:O'|Mc)?[A-Z][a-z]+(?:-[A-Z][a-z]+)?,\s+[A-Z][a-z]+(?:\s+[A-Z]\.)?)\b/g, group: 1 },
       ],
       STUDENT_ID: [{ type: 'STUDENT_ID', regex: /(?:(?:Student\s*ID|SID|ID)\s*[:#]?\s*)(\b\d{6,10}\b)/gi, group: 1 }],
+      // Family member names in context (FERPA: names of family members)
+      FAMILY_NAME: [
+        { type: 'FAMILY_NAME', regex: /\b(?:Mother|Father|Parent|Guardian|Emergency\s+Contact)\s*[:#-]?\s*([A-Z][a-z]+(?:\s+[A-Z]\.)?\s+(?:O'|Mc)?[A-Z][a-z]+(?:-[A-Z][a-z]+)?)\b/gi, group: 1 }
+      ],
+      // Date of Birth in context
+      DOB: [
+        { type: 'DOB', regex: /\b(?:DOB|Date\s+of\s+Birth)\s*[:#-]?\s*(\d{4}-\d{2}-\d{2}|\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}|(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+\d{1,2},\s+\d{4}|\d{1,2}\s+(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?)\s+\d{4})\b/gi, group: 1 }
+      ],
+      // Place of Birth in context
+      POB: [
+        { type: 'POB', regex: /\b(?:Place\s+of\s+Birth|POB|Born\s+in)\s*[:#-]?\s*([A-Za-z][A-Za-z .,'-]{1,40}(?:,\s*[A-Za-z .'-]{2,40})?)/gi, group: 1 }
+      ],
+      // Government identifiers in context
+      DRIVER_LICENSE: [ { type: 'DRIVER_LICENSE', regex: /\b(?:Driver'?s\s*License|DL)\s*[:#-]?\s*([A-Z0-9]{6,12})\b/gi, group: 1 } ],
+      PASSPORT: [ { type: 'PASSPORT', regex: /\bPassport\s*[:#-]?\s*([A-Z0-9]{6,9})\b/gi, group: 1 } ],
+      VIN: [ { type: 'VIN', regex: /\bVIN\s*[:#-]?\s*([A-HJ-NPR-Z0-9]{17})\b/gi, group: 1 } ],
+      LICENSE_PLATE: [ { type: 'LICENSE_PLATE', regex: /\b(?:License\s*Plate|Plate)\s*[:#-]?\s*([A-Z0-9 -]{5,10})\b/gi, group: 1 } ],
+      // Usernames or login IDs
+      USERNAME: [ { type: 'USERNAME', regex: /\b(?:Username|Login)\s*[:#-]?\s*([A-Za-z0-9._-]{3,})\b/gi, group: 1 } ],
       DATE: [
         { type: 'DATE', regex: /\b\d{4}-\d{2}-\d{2}\b/g },                               // 2024-10-31
         { type: 'DATE', regex: /\b\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}\b/g },             // 10/31/2024

@@ -23,15 +23,7 @@
             </div>
         </header>
 
-        <div class="disclaimer-box">
-            <p class="disclaimer-title">
-                <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
-                </svg>
-                Important Disclaimer
-            </p>
-            <p class="disclaimer-text">This tool is for demonstration only. It is <span class="font-semibold">NOT</span> a substitute for a professional FERPA-compliant de-identification service. It may miss sensitive data or remove data incorrectly. Always manually review the output before any official use.</p>
-        </div>
+        
 
         <main class="space-y-6">
             <div class="io-grid">
@@ -77,6 +69,12 @@
                         </label>
                         <p class="io-card-description">Cleaned text will appear here.</p>
                         <textarea id="outputText" readonly class="io-card-textarea io-card-textarea-output"></textarea>
+                        <button id="copyButton" class="btn btn-orange btn-lg" style="margin-top: 1rem; width: 100%;" title="Copy the output text">
+                            <svg class="icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                            </svg>
+                            Copy Output
+                        </button>
 
                         <!-- Encryption Feedback -->
                         <div id="opFeedback" class="hidden" style="margin-top: 1rem;">
@@ -106,12 +104,6 @@
             </div>
 
             <div class="button-group">
-                <button id="copyButton" class="btn btn-secondary">
-                    <svg class="icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
-                    </svg>
-                    Copy Output
-                </button>
                 <button id="clearButton" class="btn btn-tertiary">
                     <svg class="icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
@@ -162,6 +154,38 @@
                     <label class="rule-item">
                         <input type="checkbox" class="checkbox" id="ruleDate" checked>
                         <span class="checkbox-label">Dates</span>
+                    </label>
+                    <label class="rule-item">
+                        <input type="checkbox" class="checkbox" id="ruleDob" checked>
+                        <span class="checkbox-label">Date of Birth</span>
+                    </label>
+                    <label class="rule-item">
+                        <input type="checkbox" class="checkbox" id="rulePob" checked>
+                        <span class="checkbox-label">Place of Birth</span>
+                    </label>
+                    <label class="rule-item">
+                        <input type="checkbox" class="checkbox" id="ruleFamilyName" checked>
+                        <span class="checkbox-label">Parent/Guardian Names</span>
+                    </label>
+                    <label class="rule-item">
+                        <input type="checkbox" class="checkbox" id="ruleUsername">
+                        <span class="checkbox-label">Username/Login</span>
+                    </label>
+                    <label class="rule-item">
+                        <input type="checkbox" class="checkbox" id="ruleDriverLicense">
+                        <span class="checkbox-label">Driver's License</span>
+                    </label>
+                    <label class="rule-item">
+                        <input type="checkbox" class="checkbox" id="rulePassport">
+                        <span class="checkbox-label">Passport</span>
+                    </label>
+                    <label class="rule-item">
+                        <input type="checkbox" class="checkbox" id="ruleVin">
+                        <span class="checkbox-label">VIN</span>
+                    </label>
+                    <label class="rule-item">
+                        <input type="checkbox" class="checkbox" id="ruleLicensePlate">
+                        <span class="checkbox-label">License Plate</span>
                     </label>
                 </div>
             </div>
@@ -330,6 +354,14 @@
                 if (document.getElementById('ruleName')?.checked) rules.push('NAME');
                 if (document.getElementById('ruleStudentId')?.checked) rules.push('STUDENT_ID');
                 if (document.getElementById('ruleDate')?.checked) rules.push('DATE');
+                if (document.getElementById('ruleDob')?.checked) rules.push('DOB');
+                if (document.getElementById('rulePob')?.checked) rules.push('POB');
+                if (document.getElementById('ruleFamilyName')?.checked) rules.push('FAMILY_NAME');
+                if (document.getElementById('ruleUsername')?.checked) rules.push('USERNAME');
+                if (document.getElementById('ruleDriverLicense')?.checked) rules.push('DRIVER_LICENSE');
+                if (document.getElementById('rulePassport')?.checked) rules.push('PASSPORT');
+                if (document.getElementById('ruleVin')?.checked) rules.push('VIN');
+                if (document.getElementById('ruleLicensePlate')?.checked) rules.push('LICENSE_PLATE');
                 return rules;
             };
 
@@ -453,7 +485,15 @@
                             'ADDRESS': 'Addresses',
                             'NAME': 'Names',
                             'STUDENT_ID': 'Student IDs',
-                            'DATE': 'Dates'
+                            'DATE': 'Dates',
+                            'DOB': 'Dates of Birth',
+                            'POB': 'Places of Birth',
+                            'FAMILY_NAME': 'Parent/Guardian Names',
+                            'USERNAME': 'Usernames',
+                            'DRIVER_LICENSE': "Driver's Licenses",
+                            'PASSPORT': 'Passports',
+                            'VIN': 'VINs',
+                            'LICENSE_PLATE': 'License Plates'
                         };
                         const items = Object.entries(stats.counts)
                             .map(([type, count]) => `${typeLabels[type] || type}: ${count}`)
@@ -530,5 +570,16 @@
             }
         });
     </script>
+    
+    <!-- Bottom Disclaimer -->
+    <footer class="disclaimer-box container" style="margin-top: 2rem;">
+        <p class="disclaimer-title">
+            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+            </svg>
+            Important Disclaimer
+        </p>
+        <p class="disclaimer-text">This tool is for demonstration only. It is <span class="font-semibold">NOT</span> a substitute for a professional FERPA-compliant de-identification service. It may miss sensitive data or remove data incorrectly. Always manually review the output before any official use.</p>
+    </footer>
 </body>
 </html>
