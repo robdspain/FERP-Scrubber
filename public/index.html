@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -16,10 +16,6 @@
         <header class="app-header">
             <div class="app-header-content">
                 <div class="app-header-actions">
-                    <button id="themeToggle" class="toggle" aria-pressed="false" aria-label="Toggle theme" data-state="unchecked" data-theme-state="dark">
-                        <span class="toggle-thumb" aria-hidden="true"></span>
-                        <span class="visually-hidden">Toggle theme</span>
-                    </button>
                     <button id="aboutButton" class="btn btn-tertiary btn-sm">About</button>
                 </div>
                 <h1 class="app-title">FERPA Scrubber</h1>
@@ -69,10 +65,21 @@
                             <svg class="icon inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
                             </svg>
-                            De-identified Output
+                            Output (Decrypted by default)
                         </label>
                         <p class="io-card-description">Cleaned text will appear here.</p>
                         <textarea id="outputText" readonly class="io-card-textarea io-card-textarea-output"></textarea>
+                        <div id="opFeedback" class="caption" style="margin-top: 0.5rem;"></div>
+                        <div class="status-section" id="opStatus">
+                            <div class="status-row" id="encRow" hidden>
+                                <span class="status-label">Encrypting & scrubbing…</span>
+                                <div class="progress"><div class="progress-bar" id="encProgress" style="width:0%"></div></div>
+                            </div>
+                            <div class="status-row" id="decRow" hidden>
+                                <span class="status-label">Decrypting…</span>
+                                <div class="progress"><div class="progress-bar" id="decProgress" style="width:0%"></div></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -89,12 +96,6 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
                     </svg>
                     Copy Output
-                </button>
-                <button id="decryptButton" class="btn btn-tertiary">
-                    <svg class="icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path>
-                    </svg>
-                    Decrypt Output
                 </button>
                 <button id="clearButton" class="btn btn-tertiary">
                     <svg class="icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -150,16 +151,7 @@
                 </div>
             </div>
 
-            <div class="status-section" id="opStatus">
-                <div class="status-row" id="encRow" hidden>
-                    <span class="status-label">Encrypting & scrubbing…</span>
-                    <div class="progress"><div class="progress-bar" id="encProgress" style="width:0%"></div></div>
-                </div>
-                <div class="status-row" id="decRow" hidden>
-                    <span class="status-label">Decrypting…</span>
-                    <div class="progress"><div class="progress-bar" id="decProgress" style="width:0%"></div></div>
-                </div>
-            </div>
+            
         </main>
         
         <section id="graphic" class="hidden canvas-section">
@@ -285,45 +277,13 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // Theme handling
+            // Light mode only
             const root = document.documentElement;
-            const themeToggle = document.getElementById('themeToggle');
+            root.setAttribute('data-theme', 'light');
             const aboutButton = document.getElementById('aboutButton');
             const aboutModal = document.getElementById('aboutModal');
             const aboutClose = document.getElementById('aboutClose');
-            const getPreferredTheme = () => {
-                const saved = localStorage.getItem('theme');
-                if (saved === 'light' || saved === 'dark') return saved;
-                return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-            };
-            const applyTheme = (theme) => {
-                if (theme === 'light') {
-                    root.setAttribute('data-theme', 'light');
-                    if (themeToggle) {
-                        themeToggle.setAttribute('aria-pressed', 'true');
-                        themeToggle.dataset.state = 'checked';
-                        themeToggle.dataset.themeState = 'light';
-                        themeToggle.setAttribute('aria-label', 'Switch to dark theme');
-                    }
-                } else {
-                    root.removeAttribute('data-theme');
-                    if (themeToggle) {
-                        themeToggle.setAttribute('aria-pressed', 'false');
-                        themeToggle.dataset.state = 'unchecked';
-                        themeToggle.dataset.themeState = 'dark';
-                        themeToggle.setAttribute('aria-label', 'Switch to light theme');
-                    }
-                }
-            };
-            let currentTheme = getPreferredTheme();
-            applyTheme(currentTheme);
-            if (themeToggle) {
-                themeToggle.addEventListener('click', () => {
-                    currentTheme = currentTheme === 'light' ? 'dark' : 'light';
-                    localStorage.setItem('theme', currentTheme);
-                    applyTheme(currentTheme);
-                });
-            }
+            // Removed theme toggle; always light
 
             // About modal
             const openAbout = () => { aboutModal.classList.remove('hidden'); };
@@ -407,6 +367,7 @@
             let lastKey = null; // base64url-encoded AES key
             let lastTokenMap = null; // { token: { c, iv } }
 
+            const opFeedback = document.getElementById('opFeedback');
             deidentifyButton.addEventListener('click', async () => {
                 const text = contentInput.value;
                 if (!text) return;
@@ -445,12 +406,28 @@
                 animate();
                 const encProg = runProgress(encRow, encProgress);
                 const rules = getSelectedRules();
-                const { cleanedText, key, tokenMap } = await callApi(text, 'deidentify', { rules });
-                outputText.value = cleanedText;
-                lastKey = key;
-                lastTokenMap = tokenMap;
-                geminiActions.classList.remove('hidden');
+                const { cleanedText, key, tokenMap, stats } = await callApi(text, 'deidentify', { rules });
+                lastKey = key; lastTokenMap = tokenMap;
                 encProg.complete();
+
+                // Auto-decrypt for display by default
+                const decProg = runProgress(decRow, decProgress);
+                const decData = await callApi(cleanedText, 'decrypt', { key, tokenMap });
+                outputText.value = decData.decryptedText || cleanedText;
+                decProg.complete();
+
+                // Feedback below output
+                const parts = [];
+                if (stats && typeof stats.total === 'number') {
+                    parts.push(`Scrubbed ${stats.total} item${stats.total === 1 ? '' : 's'}`);
+                    if (stats.counts) {
+                        const byType = Object.entries(stats.counts).map(([k,v]) => `${k}: ${v}`).join(', ');
+                        if (byType) parts.push(`(${byType})`);
+                    }
+                }
+                parts.push('Then decrypted output for display.');
+                opFeedback.textContent = parts.join(' ');
+                geminiActions.classList.remove('hidden');
             });
 
             const handleGeminiAction = async (action, title) => {
@@ -503,12 +480,7 @@
                         return;
                     }
                     const decProg = runProgress(decRow, decProgress);
-                    const response = await fetch('/scrub', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ action: 'decrypt', text: outputText.value, key: lastKey, tokenMap: lastTokenMap })
-                    });
-                    const data = await response.json();
+                    const data = await callApi(outputText.value, 'decrypt', { key: lastKey, tokenMap: lastTokenMap });
                     if (data.decryptedText) {
                         outputText.value = data.decryptedText;
                         decProg.complete();

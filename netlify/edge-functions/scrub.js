@@ -71,9 +71,11 @@ export default async (req, context) => {
       ],
     };
 
+    // Determine which rule buckets are enabled from client; if none provided, enable all.
     const ruleKeys = Array.isArray(rules) && rules.length ? rules : Object.keys(ALL_RULES);
     const selectedPatterns = ruleKeys.flatMap((k) => ALL_RULES[k] || []);
 
+    // Apply requested patterns
     for (const { type, regex, group } of selectedPatterns) {
       cleaned = cleaned.replace(regex, (...args) => {
         const match = args[0];
@@ -99,7 +101,10 @@ export default async (req, context) => {
     for (const item of found) {
       map[item.token] = await encryptText(item.value, key);
     }
-    return { cleanedText: cleaned, key: kB64, tokenMap: map };
+    // Build simple counts per type for UI feedback
+    const counts = found.reduce((acc, cur) => { acc[cur.type] = (acc[cur.type] || 0) + 1; return acc; }, {});
+    const stats = { total: found.length, counts };
+    return { cleanedText: cleaned, key: kB64, tokenMap: map, stats };
   };
 
   if (action === 'deidentify') {
