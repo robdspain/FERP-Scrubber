@@ -121,6 +121,11 @@
                         Rules
                     </h3>
                     <p class="rules-description">Choose which items to tokenize + encrypt at the edge.</p>
+                    <div class="button-group" style="margin-top:0.5rem;">
+                        <button id="strictFerpaPreset" class="btn btn-sm btn-tertiary" title="Select DOB/POB/Family/Gov IDs">
+                            Strict FERPA Preset
+                        </button>
+                    </div>
                 </div>
                 <div class="rules-grid">
                     <label class="rule-item">
@@ -156,6 +161,10 @@
                         <span class="checkbox-label">Dates</span>
                     </label>
                     <label class="rule-item">
+                        <input type="checkbox" class="checkbox" id="ruleBiometric">
+                        <span class="checkbox-label">Biometric Keywords</span>
+                    </label>
+                    <label class="rule-item">
                         <input type="checkbox" class="checkbox" id="ruleDob" checked>
                         <span class="checkbox-label">Date of Birth</span>
                     </label>
@@ -188,21 +197,26 @@
                         <span class="checkbox-label">License Plate</span>
                     </label>
                 </div>
+
+                <!-- Custom Rules Input -->
+                <div class="form-group" style="margin-top: 0.75rem;">
+                    <label class="io-card-label" for="customRuleInput">
+                        <svg class="icon inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                        </svg>
+                        Add Custom Rule
+                    </label>
+                    <p class="io-card-description">Mask school-specific terms (e.g., "Bus route 12", "Homeroom Tigers").</p>
+                    <div style="display:flex; gap:0.5rem;">
+                        <input id="customRuleInput" class="input" placeholder="e.g., After-school pickup code" />
+                        <button id="addCustomRuleButton" class="btn btn-accent btn-sm">+ Add</button>
+                    </div>
+                    <div id="customRulesList" style="margin-top:0.5rem; display:flex; flex-wrap:wrap; gap:0.5rem;"></div>
+                </div>
             </div>
 
             
         </main>
-        
-        <section id="graphic" class="hidden canvas-section">
-            <h2 class="canvas-header">
-                <svg class="icon inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-                </svg>
-                Scrubbing Process
-            </h2>
-            <canvas id="scrubbingCanvas" class="canvas-element"></canvas>
-        </section>
-
         <section id="geminiActions" class="hidden gemini-section">
             <div class="gemini-header">
                 <h2 class="gemini-title">
@@ -354,6 +368,7 @@
                 if (document.getElementById('ruleName')?.checked) rules.push('NAME');
                 if (document.getElementById('ruleStudentId')?.checked) rules.push('STUDENT_ID');
                 if (document.getElementById('ruleDate')?.checked) rules.push('DATE');
+                if (document.getElementById('ruleBiometric')?.checked) rules.push('BIOMETRIC');
                 if (document.getElementById('ruleDob')?.checked) rules.push('DOB');
                 if (document.getElementById('rulePob')?.checked) rules.push('POB');
                 if (document.getElementById('ruleFamilyName')?.checked) rules.push('FAMILY_NAME');
@@ -388,6 +403,10 @@
             const simplifyButton = document.getElementById('simplifyButton');
             const extractButton = document.getElementById('extractButton');
             const narrativeButton = document.getElementById('narrativeButton');
+            const strictFerpaPreset = document.getElementById('strictFerpaPreset');
+            const customRuleInput = document.getElementById('customRuleInput');
+            const addCustomRuleButton = document.getElementById('addCustomRuleButton');
+            const customRulesList = document.getElementById('customRulesList');
             const geminiLoading = document.getElementById('geminiLoading');
             const geminiResult = document.getElementById('geminiResult');
             const geminiResultTitle = document.getElementById('geminiResultTitle');
@@ -413,47 +432,69 @@
             // Holds encryption package from last de-identification
             let lastKey = null; // base64url-encoded AES key
             let lastTokenMap = null; // { token: { c, iv } }
+            let customRules = [];
+
+            const renderCustomRules = () => {
+                customRulesList.innerHTML = '';
+                customRules.forEach((rule, idx) => {
+                    const chip = document.createElement('span');
+                    chip.className = 'badge';
+                    chip.style.display = 'inline-flex';
+                    chip.style.alignItems = 'center';
+                    chip.style.gap = '0.25rem';
+                    chip.textContent = rule;
+                    const btn = document.createElement('button');
+                    btn.className = 'btn btn-tertiary btn-xs';
+                    btn.textContent = '×';
+                    btn.title = 'Remove';
+                    btn.addEventListener('click', () => {
+                        customRules.splice(idx, 1);
+                        renderCustomRules();
+                    });
+                    chip.appendChild(btn);
+                    customRulesList.appendChild(chip);
+                });
+            };
+
+            addCustomRuleButton.addEventListener('click', () => {
+                const v = (customRuleInput.value || '').trim();
+                if (!v) return;
+                if (!customRules.includes(v)) customRules.push(v);
+                customRuleInput.value = '';
+                renderCustomRules();
+            });
+
+            customRuleInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addCustomRuleButton.click();
+                }
+            });
+
+            if (strictFerpaPreset) {
+                strictFerpaPreset.addEventListener('click', () => {
+                    const set = (id, val=true) => { const el = document.getElementById(id); if (el) el.checked = val; };
+                    // Emphasize sensitive indirect/ID items per request
+                    set('ruleDob');
+                    set('rulePob');
+                    set('ruleFamilyName');
+                    set('ruleDriverLicense');
+                    set('rulePassport');
+                    set('ruleVin');
+                    set('ruleLicensePlate');
+                    set('ruleUsername');
+                    set('ruleBiometric');
+                });
+            }
 
             const opFeedback = document.getElementById('opFeedback');
             deidentifyButton.addEventListener('click', async () => {
                 const text = contentInput.value;
                 if (!text) return;
 
-                const graphic = document.getElementById('graphic');
-                graphic.classList.remove('hidden');
-
-                const canvas = document.getElementById('scrubbingCanvas');
-                const ctx = canvas.getContext('2d');
-                let width = canvas.width;
-                let height = canvas.height;
-
-                const animate = () => {
-                    ctx.clearRect(0, 0, width, height);
-                    ctx.font = '16px var(--font-sans)';
-                    ctx.fillStyle = 'var(--color-foreground)';
-                    ctx.textAlign = 'center';
-                    ctx.fillText('Scrubbing in progress...', width / 2, height / 2 - 20);
-
-                    let progress = 0;
-                    const interval = setInterval(() => {
-                        progress += 10;
-                        ctx.clearRect(0, 0, width, height);
-                        ctx.fillText('Scrubbing in progress...', width / 2, height / 2 - 20);
-                        ctx.fillStyle = 'var(--color-primary)';
-                        ctx.fillRect(width / 2 - 50, height / 2, progress, 10);
-                        if (progress >= 100) {
-                            clearInterval(interval);
-                            ctx.clearRect(0, 0, width, height);
-                            ctx.fillStyle = 'var(--color-success)';
-                            ctx.fillText('Scrubbing complete!', width / 2, height / 2);
-                        }
-                    }, 100);
-                };
-
-                animate();
                 const encProg = runProgress(encRow, encProgress);
                 const rules = getSelectedRules();
-                const { cleanedText, key, tokenMap, stats } = await callApi(text, 'deidentify', { rules });
+                const { cleanedText, key, tokenMap, stats } = await callApi(text, 'deidentify', { rules, customRules });
                 lastKey = key; lastTokenMap = tokenMap;
                 encProg.complete();
 
@@ -486,6 +527,7 @@
                             'NAME': 'Names',
                             'STUDENT_ID': 'Student IDs',
                             'DATE': 'Dates',
+                            'BIOMETRIC': 'Biometric Lines',
                             'DOB': 'Dates of Birth',
                             'POB': 'Places of Birth',
                             'FAMILY_NAME': 'Parent/Guardian Names',
@@ -493,7 +535,8 @@
                             'DRIVER_LICENSE': "Driver's Licenses",
                             'PASSPORT': 'Passports',
                             'VIN': 'VINs',
-                            'LICENSE_PLATE': 'License Plates'
+                            'LICENSE_PLATE': 'License Plates',
+                            'CUSTOM': 'Custom Rules'
                         };
                         const items = Object.entries(stats.counts)
                             .map(([type, count]) => `${typeLabels[type] || type}: ${count}`)
@@ -544,8 +587,6 @@
                 outputText.value = '';
                 geminiActions.classList.add('hidden');
                 geminiResult.classList.add('hidden');
-                const graphic = document.getElementById('graphic');
-                graphic.classList.add('hidden');
                 lastKey = null; lastTokenMap = null;
             });
 
