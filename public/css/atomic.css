@@ -8,6 +8,8 @@
     --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
       "Courier New", monospace;
     --spacing: 0.25rem;
+    --text-sm: 0.875rem;
+    --text-sm--line-height: calc(1.25 / 0.875);
     --font-weight-semibold: 600;
     --ease-out: cubic-bezier(0, 0, 0.2, 1);
     --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
@@ -197,6 +199,9 @@
   .inline-block {
     display: inline-block;
   }
+  .flex-1 {
+    flex: 1;
+  }
   .transform {
     transform: var(--tw-rotate-x,) var(--tw-rotate-y,) var(--tw-rotate-z,) var(--tw-skew-x,) var(--tw-skew-y,);
   }
@@ -223,6 +228,10 @@
   .border {
     border-style: var(--tw-border-style);
     border-width: 1px;
+  }
+  .text-sm {
+    font-size: var(--text-sm);
+    line-height: var(--tw-leading, var(--text-sm--line-height));
   }
   .font-semibold {
     --tw-font-weight: var(--font-weight-semibold);
@@ -481,6 +490,42 @@ body {
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
+}
+.alert {
+  padding: 1rem;
+  border-radius: var(--radius);
+  border: 1px solid;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  animation: slideDown 0.3s ease-out;
+}
+.alert-info {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(59, 130, 246, 0.03) 100%);
+  border-color: rgba(59, 130, 246, 0.3);
+  color: hsl(var(--foreground));
+}
+.alert-info svg {
+  color: #3b82f6;
+  flex-shrink: 0;
+}
+.alert-success {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.08) 0%, rgba(34, 197, 94, 0.03) 100%);
+  border-color: rgba(34, 197, 94, 0.3);
+  color: hsl(var(--foreground));
+}
+.alert-success svg {
+  color: #22c55e;
+  flex-shrink: 0;
+}
+.alert-warning {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.08) 0%, rgba(245, 158, 11, 0.03) 100%);
+  border-color: rgba(245, 158, 11, 0.3);
+  color: hsl(var(--foreground));
+}
+.alert-warning svg {
+  color: #f59e0b;
+  flex-shrink: 0;
 }
 .progress {
   position: relative;
@@ -890,6 +935,16 @@ body {
 }
 .hidden {
   display: none;
+}
+.flex-1 {
+  flex: 1 1 0%;
+}
+.font-semibold {
+  font-weight: 600;
+}
+.text-sm {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
 }
 .spinner {
   width: 2rem;

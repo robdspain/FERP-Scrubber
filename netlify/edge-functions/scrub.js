@@ -178,35 +178,73 @@ export default async (req, context) => {
     const gateway = (typeof Deno !== 'undefined' && Deno.env?.get('AI_GATEWAY_URL')) ||
                     (typeof process !== 'undefined' && process.env?.AI_GATEWAY_URL);
 
-    if (!gateway) {
+    if (gateway) {
+      try {
+        const resp = await fetch(`${gateway.replace(/\/$/, '')}/ai`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action,
+            text: sanitizeForAI(cleanedText),
+            directions: sanitizeForAI(directions || ''),
+            system: systemPolicy,
+            schema: outputSchema,
+            format: 'json',
+          })
+        });
+        if (resp.ok) {
+          const data = await resp.json();
+          const raw = data?.content ?? data?.text ?? data?.geminiText ?? '';
+          const safe = stripUrls(String(raw || ''));
+          return new Response(JSON.stringify({ geminiText: safe }), { headers: { 'Content-Type': 'application/json' } });
+        }
+        // fall through to direct call on non-OK
+      } catch (_) {
+        // fall through to direct call on error
+      }
+    }
+
+    // Fallback: call Gemini directly if API key is present (primarily for dev/testing).
+    const getEnv = (name) => (typeof Deno !== 'undefined' && Deno.env?.get(name)) || (typeof process !== 'undefined' && process.env?.[name]);
+    const apiKey = getEnv('GEMINI_API_KEY');
+    const modelName = getEnv('GEMINI_MODEL') || 'gemini-1.5-flash';
+    if (!apiKey) {
       return new Response(JSON.stringify({
-        error: 'AI gateway not configured',
-        hint: 'Set AI_GATEWAY_URL to a service that uses a vault to obtain provider credentials and call the model on your behalf.'
+        error: 'AI gateway not configured and no direct API key available',
+        hint: 'Set AI_GATEWAY_URL (preferred) or GEMINI_API_KEY for a direct dev fallback.'
       }), { status: 500, headers: { 'Content-Type': 'application/json' } });
     }
 
+    const prompt = [
+      systemPolicy,
+      '',
+      'TASK:',
+      directions && directions.trim() ? sanitizeForAI(directions.trim()) : `Perform action: ${action}.`,
+      '',
+      'CONTENT:',
+      sanitizeForAI(cleanedText)
+    ].join('\n');
+
     try {
-      const resp = await fetch(`${gateway.replace(/\/$/, '')}/ai`, {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(modelName)}:generateContent?key=${encodeURIComponent(apiKey)}`;
+      const resp = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          action,
-          text: sanitizeForAI(cleanedText),
-          directions: sanitizeForAI(directions || ''),
-          system: systemPolicy,
-          schema: outputSchema,
-          format: 'json',
+          contents: [{ role: 'user', parts: [{ text: prompt }] }]
         })
       });
       if (!resp.ok) {
-        return new Response(JSON.stringify({ error: 'AI gateway error' }), { status: 502, headers: { 'Content-Type': 'application/json' } });
+        return new Response(JSON.stringify({ error: 'Gemini API error' }), { status: 502, headers: { 'Content-Type': 'application/json' } });
       }
       const data = await resp.json();
-      const raw = data?.content ?? data?.text ?? data?.geminiText ?? '';
-      const safe = stripUrls(String(raw || ''));
+      const parts = data?.candidates?.[0]?.content?.parts || [];
+      const textOut = parts.map((p) => p.text).filter(Boolean).join('\n');
+      const safe = stripUrls(String(textOut || ''));
+      // Best-effort schema: coerce into { content }
       return new Response(JSON.stringify({ geminiText: safe }), { headers: { 'Content-Type': 'application/json' } });
     } catch (e) {
-      return new Response(JSON.stringify({ error: 'AI gateway unreachable' }), { status: 502, headers: { 'Content-Type': 'application/json' } });
+      return new Response(JSON.stringify({ error: 'Direct Gemini call failed' }), { status: 502, headers: { 'Content-Type': 'application/json' } });
     }
   }
 

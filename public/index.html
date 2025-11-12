@@ -69,7 +69,20 @@
                         </label>
                         <p class="io-card-description">Cleaned text will appear here.</p>
                         <textarea id="outputText" readonly class="io-card-textarea io-card-textarea-output"></textarea>
-                        <div id="opFeedback" class="caption" style="margin-top: 0.5rem;"></div>
+
+                        <!-- Encryption Feedback -->
+                        <div id="opFeedback" class="hidden" style="margin-top: 1rem;">
+                            <div class="alert alert-info">
+                                <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                                </svg>
+                                <div class="flex-1">
+                                    <p class="font-semibold" id="opFeedbackTitle">Protected Items</p>
+                                    <p class="text-sm" id="opFeedbackDetails" style="margin-top: 0.25rem;"></p>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="status-section" id="opStatus">
                             <div class="status-row" id="encRow" hidden>
                                 <span class="status-label">Encrypting & scrubbing…</span>
@@ -417,16 +430,39 @@
                 decProg.complete();
 
                 // Feedback below output
-                const parts = [];
-                if (stats && typeof stats.total === 'number') {
-                    parts.push(`Scrubbed ${stats.total} item${stats.total === 1 ? '' : 's'}`);
+                const feedbackContainer = document.getElementById('opFeedback');
+                const feedbackTitle = document.getElementById('opFeedbackTitle');
+                const feedbackDetails = document.getElementById('opFeedbackDetails');
+
+                if (stats && typeof stats.total === 'number' && stats.total > 0) {
+                    feedbackContainer.classList.remove('hidden');
+
+                    // Title
+                    feedbackTitle.textContent = `✓ Protected ${stats.total} sensitive item${stats.total === 1 ? '' : 's'}`;
+
+                    // Details with breakdown
+                    const details = [];
                     if (stats.counts) {
-                        const byType = Object.entries(stats.counts).map(([k,v]) => `${k}: ${v}`).join(', ');
-                        if (byType) parts.push(`(${byType})`);
+                        const typeLabels = {
+                            'EMAIL': 'Emails',
+                            'STUDENT_EMAIL': 'Student Emails',
+                            'PHONE': 'Phone Numbers',
+                            'SSN': 'Social Security Numbers',
+                            'ADDRESS': 'Addresses',
+                            'NAME': 'Names',
+                            'STUDENT_ID': 'Student IDs',
+                            'DATE': 'Dates'
+                        };
+                        const items = Object.entries(stats.counts)
+                            .map(([type, count]) => `${typeLabels[type] || type}: ${count}`)
+                            .join(' • ');
+                        details.push(items);
                     }
+                    details.push('All items were encrypted and replaced with tokens, then decrypted for display.');
+                    feedbackDetails.textContent = details.join('\n');
+                } else {
+                    feedbackContainer.classList.add('hidden');
                 }
-                parts.push('Then decrypted output for display.');
-                opFeedback.textContent = parts.join(' ');
                 geminiActions.classList.remove('hidden');
             });
 
