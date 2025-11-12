@@ -12,135 +12,271 @@
 <body class="bg-background text-foreground">
 
     <div class="container">
-        
-        <header class="header">
-            <div class="header__actions">
-                <button id="themeToggle" class="theme-toggle" aria-pressed="false" aria-label="Toggle theme" data-theme-state="dark">
-                    <span class="theme-toggle__thumb" aria-hidden="true"></span>
-                    <span class="visually-hidden">Toggle theme</span>
-                </button>
-                <button id="aboutButton" class="button button--tertiary">About</button>
+
+        <header class="app-header">
+            <div class="app-header-content">
+                <div class="app-header-actions">
+                    <button id="themeToggle" class="toggle" aria-pressed="false" aria-label="Toggle theme" data-state="unchecked" data-theme-state="dark">
+                        <span class="toggle-thumb" aria-hidden="true"></span>
+                        <span class="visually-hidden">Toggle theme</span>
+                    </button>
+                    <button id="aboutButton" class="btn btn-tertiary btn-sm">About</button>
+                </div>
+                <h1 class="app-title">FERPA Scrubber</h1>
+                <p class="app-subtitle">Paste text to automatically protect student information. AI only sees de-identified text.</p>
             </div>
-            <h1 class="header__title">FERPA Scrubber</h1>
-            <p class="header__subtitle">Paste text to automatically protect student information. AI only sees de-identified text.</p>
         </header>
 
-        <div class="disclaimer">
-            <p class="disclaimer__title">Important Disclaimer</p>
-            <p class="disclaimer__text">This tool is for demonstration only. It is <span class="font-semibold">NOT</span> a substitute for a professional FERPA-compliant de-identification service. It may miss sensitive data or remove data incorrectly. Always manually review the output before any official use.</p>
+        <div class="disclaimer-box">
+            <p class="disclaimer-title">
+                <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                </svg>
+                Important Disclaimer
+            </p>
+            <p class="disclaimer-text">This tool is for demonstration only. It is <span class="font-semibold">NOT</span> a substitute for a professional FERPA-compliant de-identification service. It may miss sensitive data or remove data incorrectly. Always manually review the output before any official use.</p>
         </div>
 
-        <main class="main-content">
+        <main class="space-y-6">
             <div class="io-grid">
                 <div class="io-card">
-                    <label for="directionsInput" class="io-card__label">Directions</label>
-                    <p class="io-card__description">Optional instructions for the AI (e.g., summarize key points for parents).</p>
-                    <input id="directionsInput" class="io-card__textarea" style="height: 3.25rem" placeholder="e.g., Summarize in 3 bullets for a parent newsletter" />
+                    <div class="form-group">
+                        <label for="directionsInput" class="io-card-label">
+                            <svg class="icon inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            Directions
+                        </label>
+                        <p class="io-card-description">Optional instructions for the AI (e.g., summarize key points for parents).</p>
+                        <input id="directionsInput" class="input" style="height: 3.25rem; min-height: auto;" placeholder="e.g., Summarize in 3 bullets for a parent newsletter" />
+                    </div>
 
-                    <div style="height: var(--spacing-lg)"></div>
-
-                    <label for="contentInput" class="io-card__label">Content</label>
-                    <p class="io-card__description">Paste your sensitive student-related text here. It will be tokenized and encrypted at the edge.</p>
-                    <textarea id="contentInput" class="io-card__textarea" placeholder="Paste student-related content here..."></textarea>
+                    <div class="form-group">
+                        <label for="contentInput" class="io-card-label">
+                            <svg class="icon inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                            Content
+                        </label>
+                        <p class="io-card-description">Paste your sensitive student-related text here. It will be tokenized and encrypted at the edge.</p>
+                        <textarea id="contentInput" class="io-card-textarea" placeholder="Paste student-related content here..."></textarea>
+                    </div>
                 </div>
 
                 <div class="io-card">
-                    <label for="outputText" class="io-card__label">De-identified Output</label>
-                    <p class="io-card__description">Cleaned text will appear here.</p>
-                    <textarea id="outputText" readonly class="io-card__textarea io-card__textarea--output"></textarea>
+                    <div class="form-group">
+                        <label for="outputText" class="io-card-label">
+                            <svg class="icon inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                            </svg>
+                            De-identified Output
+                        </label>
+                        <p class="io-card-description">Cleaned text will appear here.</p>
+                        <textarea id="outputText" readonly class="io-card-textarea io-card-textarea-output"></textarea>
+                    </div>
                 </div>
             </div>
 
             <div class="button-group">
-                <button id="deidentifyButton" class="button button--primary">De-identify Text</button>
-                <button id="copyButton" class="button button--secondary">Copy Output</button>
-                <button id="decryptButton" class="button button--tertiary">Decrypt Output</button>
-                <button id="clearButton" class="button button--tertiary">Clear All</button>
+                <button id="deidentifyButton" class="btn btn-primary">
+                    <svg class="icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    De-identify Text
+                </button>
+                <button id="copyButton" class="btn btn-secondary">
+                    <svg class="icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                    </svg>
+                    Copy Output
+                </button>
+                <button id="decryptButton" class="btn btn-tertiary">
+                    <svg class="icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path>
+                    </svg>
+                    Decrypt Output
+                </button>
+                <button id="clearButton" class="btn btn-tertiary">
+                    <svg class="icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                    </svg>
+                    Clear All
+                </button>
             </div>
 
-            <div class="io-card" id="rulesCard">
-                <h3 class="card__title">Rules</h3>
-                <p class="card__subtitle">Choose which items to tokenize + encrypt at the edge.</p>
+            <div class="rules-section" id="rulesCard">
+                <div class="rules-header">
+                    <h3 class="rules-title">
+                        <svg class="icon inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
+                        </svg>
+                        Rules
+                    </h3>
+                    <p class="rules-description">Choose which items to tokenize + encrypt at the edge.</p>
+                </div>
                 <div class="rules-grid">
-                    <label class="rule"><input type="checkbox" id="ruleEmail" checked> Email</label>
-                    <label class="rule"><input type="checkbox" id="ruleStudentEmail" checked> Student Email (.edu/k12)</label>
-                    <label class="rule"><input type="checkbox" id="rulePhone" checked> Phone</label>
-                    <label class="rule"><input type="checkbox" id="ruleSSN" checked> SSN</label>
-                    <label class="rule"><input type="checkbox" id="ruleAddress" checked> Address</label>
-                    <label class="rule"><input type="checkbox" id="ruleName" checked> Names</label>
-                    <label class="rule"><input type="checkbox" id="ruleStudentId" checked> Student ID</label>
-                    <label class="rule"><input type="checkbox" id="ruleDate" checked> Dates</label>
+                    <label class="rule-item">
+                        <input type="checkbox" class="checkbox" id="ruleEmail" checked>
+                        <span class="checkbox-label">Email</span>
+                    </label>
+                    <label class="rule-item">
+                        <input type="checkbox" class="checkbox" id="ruleStudentEmail" checked>
+                        <span class="checkbox-label">Student Email</span>
+                    </label>
+                    <label class="rule-item">
+                        <input type="checkbox" class="checkbox" id="rulePhone" checked>
+                        <span class="checkbox-label">Phone</span>
+                    </label>
+                    <label class="rule-item">
+                        <input type="checkbox" class="checkbox" id="ruleSSN" checked>
+                        <span class="checkbox-label">SSN</span>
+                    </label>
+                    <label class="rule-item">
+                        <input type="checkbox" class="checkbox" id="ruleAddress" checked>
+                        <span class="checkbox-label">Address</span>
+                    </label>
+                    <label class="rule-item">
+                        <input type="checkbox" class="checkbox" id="ruleName" checked>
+                        <span class="checkbox-label">Names</span>
+                    </label>
+                    <label class="rule-item">
+                        <input type="checkbox" class="checkbox" id="ruleStudentId" checked>
+                        <span class="checkbox-label">Student ID</span>
+                    </label>
+                    <label class="rule-item">
+                        <input type="checkbox" class="checkbox" id="ruleDate" checked>
+                        <span class="checkbox-label">Dates</span>
+                    </label>
                 </div>
             </div>
 
-            <div class="status" id="opStatus">
-                <div class="status__row" id="encRow" hidden>
-                    <span class="status__label">Encrypting & scrubbing…</span>
-                    <div class="progress"><div class="progress__bar" id="encProgress" style="width:0%"></div></div>
+            <div class="status-section" id="opStatus">
+                <div class="status-row" id="encRow" hidden>
+                    <span class="status-label">Encrypting & scrubbing…</span>
+                    <div class="progress"><div class="progress-bar" id="encProgress" style="width:0%"></div></div>
                 </div>
-                <div class="status__row" id="decRow" hidden>
-                    <span class="status__label">Decrypting…</span>
-                    <div class="progress"><div class="progress__bar" id="decProgress" style="width:0%"></div></div>
+                <div class="status-row" id="decRow" hidden>
+                    <span class="status-label">Decrypting…</span>
+                    <div class="progress"><div class="progress-bar" id="decProgress" style="width:0%"></div></div>
                 </div>
             </div>
         </main>
         
-        <section id="graphic" class="hidden graphic-section">
-            <div class="card">
-                <h2 class="card__title">Scrubbing Process</h2>
-                <canvas id="scrubbingCanvas" class="graphic-section__canvas"></canvas>
-            </div>
+        <section id="graphic" class="hidden canvas-section">
+            <h2 class="canvas-header">
+                <svg class="icon inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                </svg>
+                Scrubbing Process
+            </h2>
+            <canvas id="scrubbingCanvas" class="canvas-element"></canvas>
         </section>
 
         <section id="geminiActions" class="hidden gemini-section">
-            <div class="card">
-                <h2 class="card__title">✨ AI Actions on Clean Text</h2>
-                <p class="card__subtitle">These tools use the Gemini API to analyze the <span class="font-semibold">de-identified output text</span> only. No sensitive input data is sent.</p>
-                
-                <div class="button-group">
-                    <button id="summarizeButton" class="button button--ai">Summarize</button>
-                    <button id="simplifyButton" class="button button--ai">Simplify</button>
-                    <button id="extractButton" class="button button--ai">Extract Info</button>
-                    <button id="narrativeButton" class="button button--ai">Create Narrative</button>
-                </div>
+            <div class="gemini-header">
+                <h2 class="gemini-title">
+                    <svg class="icon inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    </svg>
+                    AI Actions on Clean Text
+                </h2>
+                <p class="gemini-description">These tools use the Gemini API to analyze the <span class="font-semibold">de-identified output text</span> only. No sensitive input data is sent.</p>
+            </div>
 
-                <div id="geminiLoading" class="hidden loading-indicator">
-                    <div class="loader"></div>
-                    <p>Calling Gemini API... Please wait.</p>
-                </div>
+            <div class="button-group">
+                <button id="summarizeButton" class="btn btn-accent">
+                    <svg class="icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                    </svg>
+                    Summarize
+                </button>
+                <button id="simplifyButton" class="btn btn-accent">
+                    <svg class="icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                    </svg>
+                    Simplify
+                </button>
+                <button id="extractButton" class="btn btn-accent">
+                    <svg class="icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
+                    </svg>
+                    Extract Info
+                </button>
+                <button id="narrativeButton" class="btn btn-accent">
+                    <svg class="icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                    </svg>
+                    Create Narrative
+                </button>
+            </div>
 
-                <div id="geminiResult" class="hidden">
-                    <h3 id="geminiResultTitle" class="gemini-result__title"></h3>
-                    <div id="geminiResultContent" class="gemini-result__content"></div>
-                </div>
+            <div id="geminiLoading" class="hidden gemini-loading">
+                <div class="spinner"></div>
+                <p class="text-muted-foreground">Calling Gemini API... Please wait.</p>
+            </div>
+
+            <div id="geminiResult" class="hidden gemini-result">
+                <h3 id="geminiResultTitle" class="gemini-result-title"></h3>
+                <div id="geminiResultContent" class="gemini-result-content"></div>
             </div>
         </section>
 
-        <div id="copyNotification" class="hidden copy-notification">
+        <div id="copyNotification" class="hidden toast">
+            <svg class="icon-sm inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
             Copied to clipboard!
         </div>
 
         <!-- About Modal -->
-        <div id="aboutModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="aboutTitle">
-            <div class="modal__content card">
-                <div class="modal__header" style="display:flex; justify-content:space-between; align-items:center; gap:1rem;">
-                    <h2 id="aboutTitle" class="card__title">About FERPA Scrubber</h2>
-                    <button id="aboutClose" class="button button--tertiary" aria-label="Close about">Close</button>
+        <div id="aboutModal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="aboutTitle">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 id="aboutTitle" class="modal-title">
+                        <svg class="icon inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        About FERPA Scrubber
+                    </h2>
+                    <button id="aboutClose" class="btn btn-tertiary btn-sm" aria-label="Close about">
+                        <svg class="icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                        Close
+                    </button>
                 </div>
-                <div class="modal__body gemini-result__content" style="background: transparent; border: none;">
-                    <p><strong>How your data is handled</strong></p>
-                    <ul>
-                        <li>On De-identify, the Edge Function replaces sensitive items with tokens (e.g., [[FERPA:EMAIL:1]]).</li>
-                        <li>Original values are encrypted on the Edge using AES‑256‑GCM; the key is returned to your browser.</li>
-                        <li>AI features only receive the de‑identified text — encrypted values and keys are never sent to the LLM.</li>
-                        <li>Decryption occurs on the Edge only when you click Decrypt, using the key and map held in your browser memory.</li>
-                        <li>No sensitive plaintext is stored server-side.</li>
-                    </ul>
-                    <p style="margin-top:1rem"><strong>What you control</strong></p>
-                    <ul>
-                        <li>Select which items to protect (emails, student emails, phones, SSNs, addresses, names, student IDs, dates).</li>
-                        <li>Optionally switch themes for readability.</li>
-                    </ul>
+                <div class="modal-body">
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="heading-5 mb-3 flex items-center gap-2">
+                                <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                                </svg>
+                                How your data is handled
+                            </h3>
+                            <ul>
+                                <li>On De-identify, the Edge Function replaces sensitive items with tokens (e.g., [[FERPA:EMAIL:1]]).</li>
+                                <li>Original values are encrypted on the Edge using AES‑256‑GCM; the key is returned to your browser.</li>
+                                <li>AI features only receive the de‑identified text — encrypted values and keys are never sent to the LLM.</li>
+                                <li>Decryption occurs on the Edge only when you click Decrypt, using the key and map held in your browser memory.</li>
+                                <li>No sensitive plaintext is stored server-side.</li>
+                            </ul>
+                        </div>
+                        <div class="divider"></div>
+                        <div>
+                            <h3 class="heading-5 mb-3 flex items-center gap-2">
+                                <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                </svg>
+                                What you control
+                            </h3>
+                            <ul>
+                                <li>Select which items to protect (emails, student emails, phones, SSNs, addresses, names, student IDs, dates).</li>
+                                <li>Optionally switch themes for readability.</li>
+                            </ul>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -163,10 +299,20 @@
             const applyTheme = (theme) => {
                 if (theme === 'light') {
                     root.setAttribute('data-theme', 'light');
-                    if (themeToggle) { themeToggle.setAttribute('aria-pressed', 'true'); themeToggle.dataset.themeState = 'light'; themeToggle.setAttribute('aria-label', 'Switch to dark theme'); }
+                    if (themeToggle) {
+                        themeToggle.setAttribute('aria-pressed', 'true');
+                        themeToggle.dataset.state = 'checked';
+                        themeToggle.dataset.themeState = 'light';
+                        themeToggle.setAttribute('aria-label', 'Switch to dark theme');
+                    }
                 } else {
                     root.removeAttribute('data-theme');
-                    if (themeToggle) { themeToggle.setAttribute('aria-pressed', 'false'); themeToggle.dataset.themeState = 'dark'; themeToggle.setAttribute('aria-label', 'Switch to light theme'); }
+                    if (themeToggle) {
+                        themeToggle.setAttribute('aria-pressed', 'false');
+                        themeToggle.dataset.state = 'unchecked';
+                        themeToggle.dataset.themeState = 'dark';
+                        themeToggle.setAttribute('aria-label', 'Switch to light theme');
+                    }
                 }
             };
             let currentTheme = getPreferredTheme();
