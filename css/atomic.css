@@ -261,6 +261,8 @@ body {
     white-space: pre-wrap;
 }
 
+.hint { color: var(--color-muted-foreground); font-size: 0.85rem; margin-top: 0.5rem; }
+
 .copy-notification {
     position: fixed;
     bottom: var(--spacing-lg);

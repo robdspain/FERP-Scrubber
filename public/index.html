@@ -251,6 +251,12 @@
                 return response.json();
             };
 
+            const notify = (msg) => {
+                copyNotification.textContent = msg;
+                copyNotification.classList.remove('hidden');
+                setTimeout(() => copyNotification.classList.add('hidden'), 2000);
+            };
+
             // Holds encryption package from last de-identification
             let lastKey = null; // base64url-encoded AES key
             let lastTokenMap = null; // { token: { c, iv } }
@@ -309,6 +315,9 @@
                 geminiResult.classList.add('hidden');
 
                 const directions = directionsInput?.value || '';
+                if (!directions) {
+                    notify('Tip: Add Directions to guide the AI (e.g., "Summarize in 3 bullets").');
+                }
                 const { geminiText } = await callApi(text, action, { directions });
 
                 geminiResultTitle.textContent = title;
@@ -325,10 +334,7 @@
             copyButton.addEventListener('click', () => {
                 outputText.select();
                 document.execCommand('copy');
-                copyNotification.classList.remove('hidden');
-                setTimeout(() => {
-                    copyNotification.classList.add('hidden');
-                }, 2000);
+                notify('Copied to clipboard!');
             });
 
             clearButton.addEventListener('click', () => {
